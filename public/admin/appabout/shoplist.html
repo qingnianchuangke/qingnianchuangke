@@ -148,9 +148,21 @@ function formatKdfs(value,row){
         return "自费开店";
 }
 function formatOpt(value,row){
-    if(row.status=="0")
-        return "<a href=\"#\" onclick=\"censorInfo('1','"+row.is_fund+"')\">[审批通过]</a>&nbsp;&nbsp;<a href=\"#\" onclick=\"censorInfo('0','"+row.is_fund+"')\">[审批不通过]</a>";
-    else return "此项目已审核过";
+    if(row.user)
+    {
+        if(row.user.base_status=="1")
+        {
+            if(row.status=="0")
+                return "<a href=\"#\" onclick=\"censorInfo('1','"+row.is_fund+"')\">[审批通过]</a>&nbsp;&nbsp;<a href=\"#\" onclick=\"censorInfo('0','"+row.is_fund+"')\">[审批不通过]</a>";
+            else return "此项目已审核过";
+        }
+        else{
+            return "此店铺申请用户还未通过审核";
+        }
+    }
+    else{
+        return "读取店铺申请用户失败";
+    } 
 }
 function censorInfo(check,is_fund){
     $.messager.confirm('提示', '确认对选择店铺进行审批操作?', function(r){

@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css">
+<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../js/common.js"></script>
+<title>众筹管理页面</title>
+<style type="text/css">
+table.altrowstable {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;	
+	color:#333333;
+	border-width: 1px;
+	border-color: #a9c6c9;
+	border-collapse: collapse;
+}
+table.altrowstable td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+.rightTd{
+	width: 580px;
+	background-color:#d4e3e5;
+	border-bottom:1px solid red
+}
+.leftTd{
+	text-align: right;
+	width: 170px;
+	background-color:#c3dde0;
+}
+</style>
+<script>
+//页面加载
+$(document).ready(function () {
+    BindData();
+    $("#tt").datagrid('getPager').pagination({
+        onSelectPage:function(pageNum, pageSize){
+            BindData();
+        }
+    });
+});
+//绑定数据
+function BindData() {
+    var pageNumber = $("#tt").datagrid('getPager').data("pagination").options.pageNumber;
+    var pageSize = $("#tt").datagrid('getPager').data("pagination").options.pageSize;
+    $.ajax({
+        type: "get",
+        url: _url+'office/crowd',
+        data: {page:pageNumber,per_page:pageSize},
+        dataType: "text",
+        success: function (r) {
+            var result = JSON.parse(r);
+            if(result.result=="2000")
+                $("#tt").datagrid("loadData", result.data);
+            else 
+                $.messager.alert("提示", result.info, "alert");
+        },
+        error: function () {
+            alert("加载失败!");
+        }
+    });
+}
+function formatStatus(value,row){
+    var result = "";
+    if(row.status=="1")
+        result = "待审核";
+    else if(row.status=="2")
+        result = "审核不通过";
+    else if(row.status=="3"){
+        result = "众筹失败";
+    }
+    else if(row.status=="4"){
+        result = "众筹中";
+    }
+
+    else if(row.status=="5"){
+        result = "众筹成功";
+    }
+
+
+    return result;
+}
+function formatOpt(value,row){
+    if(row.status=="1" || row.status=="2" )
+    {
+        return "<a href=\"#\" onclick=\"censor('1','"+row.id+"')\">[审核通过]</a>&nbsp;&nbsp;<a href=\"#\" onclick=\"censor('0','"+row.id+"')\">[审核不通过]</a>";
+    }
+    else{
+        return "已审核";
+    }
+}
+function censor(check,id){
+    var remark="";
+    if(check=="0")
+        remark = prompt("请输入审核不通过的原因：", ""); 
+    if(check == "0" && remark==null){
+        return;
+    }
+    else if(check == "0" && remark==""){
+        $.messager.alert("提示", "请输入审核不通过的原因!", "alert");
+        return;
+    }
+    $.ajax({
+        type: "put",
+        url: _url+'office/crowd/'+id+'/censor',
+        data: {check:check,remark:remark},
+        dataType: "text",
+        success: function (result) {
+            alert(JSON.parse(result).info);
+            if(JSON.parse(result).result=="2000")
+                BindData();
+        },
+        error: function () {
+            alert("操作失败!");
+        }
+    });
+}
+function formatDetail(value,row,index){
+    $('#dg').datagrid('selectRow', index);
+    return "<a href=\"#\" onclick=\"viewDetail()\">[点击查看]</a>";
+}
+function viewDetail () {
+    var sdata = $("#tt").datagrid("getSelected");
+    if(sdata){
+        var id=sdata.id;
+        $.ajax({
+            type: "get",
+            url: _url+'office/crowd/'+id,
+            data: {},
+            dataType: "text",
+            success: function (result) {
+                if(JSON.parse(result).result=="2000")
+                    BindDetail(JSON.parse(result).data);
+            },
+            error: function () {
+                alert("操作失败!");
+            }
+        });
+    }
+}
+function BindDetail(data){
+    $("#cover_img").attr("src","#");
+    if(data.cover_img.length>0)
+        $("#cover_img").attr("src",data.cover_img[0]);
+    var r = "";
+    $(data.content).each(function(){
+        r+="<img style='width:200px;height:100px;' src='"+this.img+"' /><br /><span>"+this.text+"</span><br />";
+    });
+    $("#content").html(r);
+    $('#crowddetail-dlg').dialog('open');
+}
+function formatFbz(value,row,index){
+    $('#dg').datagrid('selectRow', index);
+    return "<a href=\"#\" onclick=\"viewUserInfo()\">[点击查看]</a>";
+}
+function viewUserInfo(){
+    var sdata = $("#tt").datagrid("getSelected");
+    if(sdata){
+        $("#head_img").attr("src",sdata.user.head_img);
+        $("#name").text(sdata.user.name);
+        $("#name").text(sdata.user.nickname);
+        switch(sdata.user.gender){
+            case "1":
+                $("#name").text("男");
+                break;
+            case "2":
+                $("#name").text("女");
+            break;
+            case "3":
+               $("#name").text("保密");
+            break;
+        }
+        $("#city").text(sdata.city.name);
+        $("#school").text(sdata.school.school_name);
+        $('#userdetail-dlg').dialog('open');
+    }
+}
+</script>
+</head>
+
+<body>
+<table id="tt" title="众筹列表" class="easyui-datagrid" data-options="
+            rownumbers:true,
+            fit:true,
+            singleSelect:true,
+            pagination:true,
+            pageSize:20,
+            idField:'id',
+            toolbar:'#menuTollbar'">
+    <thead>
+        <tr>
+            <th data-options="field:'id',width:40,align:'left',halign:'center',sortable:true">id</th>
+            <th data-options="field:'cate_label',width:80,align:'left',halign:'center',sortable:true">类型</th>
+            <th data-options="field:'title',width:200,align:'left',halign:'center',sortable:true">标题</th>
+            <th data-options="field:'active_at',width:120,align:'left',halign:'center',sortable:true">创建时间</th>
+            <th data-options="field:'time',width:80,align:'left',halign:'center',sortable:true">众筹天数</th>
+            <th data-options="field:'target_amount',width:80,align:'left',halign:'center',sortable:true">目标金额</th>
+            <th data-options="field:'target_quantity',width:80,align:'left',halign:'center',sortable:true">众筹份数</th>
+            <th data-options="field:'price',width:80,align:'left',halign:'center',sortable:true">每份金额</th>
+            <th data-options="field:'amount',width:80,align:'left',halign:'center',sortable:true">已筹金额</th>
+            <th data-options="field:'sold_quantity',width:80,align:'left',halign:'center',sortable:true">已筹份数</th>
+            <th data-options="field:'is_limit',width:80,align:'left',halign:'center',sortable:true">是否限购</th>
+            <th data-options="field:'mx',width:80,align:'left',halign:'center',sortable:true,formatter:formatDetail">明细</th>
+            <th data-options="field:'fbz',width:80,align:'left',halign:'center',sortable:true,formatter:formatFbz">发布者</th>
+            <th data-options="field:'status',width:120,align:'left',halign:'center',sortable:true,formatter:formatStatus">状态</th>
+            <th data-options="field:'options',width:180,align:'center',halign:'center',sortable:true,formatter:formatOpt">操作</th>
+        </tr>
+    </thead>
+</table>
+<div id="menuTollbar" style="height: auto;">
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="BindData();">刷新</a>
+</div>
+
+
+<div id="userdetail-dlg" class="easyui-dialog" title="用户明细" style="width: 400px; height: 380px; padding: 5px"
+    data-options="
+        closed: true,
+        modal: true,
+        iconCls: 'icon-search',
+        buttons: '#userdetail-dlg-buttons'
+    ">
+    <table class="altrowstable">
+        <tr>
+            <td class="leftTd">头像</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="head_img"/></td>
+        </tr>
+        <tr>
+            <td class="leftTd">姓名</td><td class="rightTd"><span id="name"></span></td>
+        </tr>
+        <tr>
+            <td class="leftTd">昵称</td><td class="rightTd"><span id="nickname"></span></td>
+        </tr>
+        <tr>
+            <td class="leftTd">性别</td><td class="rightTd"><span id="gender"></span></td>
+        </tr>
+        <tr>
+            <td class="leftTd">城市</td><td class="rightTd"><span id="city"></span></td>
+        </tr>
+        <tr>
+            <td class="leftTd">学校</td><td class="rightTd"><span id="school"></span></td>
+        </tr>
+    </table>
+</div>
+<div id="userdetail-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#userdetail-dlg').dialog('close');">关闭</a>
+</div>
+
+<div id="crowddetail-dlg" class="easyui-dialog" title="众筹明细" style="width: 420px; height: 500px; padding: 5px"
+    data-options="
+        closed: true,
+        modal: true,
+        iconCls: 'icon-search',
+        buttons: '#crowddetail-dlg-buttons'
+    ">
+    <table class="altrowstable">
+        <tr>
+            <td class="leftTd">封面图</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="cover_img"/></td>
+        </tr>
+        <tr>
+            <td class="leftTd">图文信息</td><td class="rightTd"><div id="content"></div></td>
+        </tr>
+    </table>
+</div>
+<div id="crowddetail-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#crowddetail-dlg').dialog('close');">关闭</a>
+</div>
+
+</body>
+</html>

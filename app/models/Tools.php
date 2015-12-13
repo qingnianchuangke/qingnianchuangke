@@ -43,6 +43,21 @@ class Tools
         return Session::get('admin_id');
     }
 
+    public static function getOfficialOrgnizationId()
+    {
+        return 1;
+    }
+
+    public static function getOfficialUserId()
+    {
+        return 5;
+    }
+
+    public static function getOfficialBoothId()
+    {
+        return 6;
+    }
+
     public static function generateDateUserRandomNo($u_id)
     {
         $now = new DateTime();
@@ -71,5 +86,47 @@ class Tools
         $aes->require_pkcs5();
         $re = $aes->decrypt($string);
         return $re;
+    }
+
+    public static function getTimeString($length)
+    {
+        $crud = time();
+        if ($length > 10) {
+            $length = 10;
+        }
+        return substr($crud, $length * -1, $length);
+    }
+
+    public static function getNow($format = 'Y-m-d H:i:s')
+    {
+        $now = new DateTime();
+        if ($format) {
+            return $now->format($format);
+        } else {
+            return $now;
+        }
+    }
+
+    public static function getTime($date = null)
+    {
+        $data = new DateTime($date);
+        return $date->format('Y-m-d H:i:s');
+    }
+
+    public static function getMakerBooth()
+    {
+        return 1;
+    }
+
+    public static function checkNoImg($img)
+    {
+        $no_img = 'http://qnck001.oss-cn-hangzhou.aliyuncs.com/noimg.jpg';
+        if (is_array($img) && empty($img)) {
+            return [$no_img];
+        }
+        if (!$img) {
+            return $no_img;
+        }
+        return $img;
     }
 }

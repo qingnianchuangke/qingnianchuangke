@@ -1,0 +1,516 @@
+body,html{
+    font-size: 125%;
+    font-size: 20px;
+}
+body{
+    width: 100%;
+    margin: 0px;
+    padding: 0px;
+    overflow-x: hidden;
+    font-family: "Microsoft yahei";
+}
+html{
+    background-color: #e7e8ec !important;
+}
+ul li {
+    list-style: none;
+    float: left;
+}
+ul{
+    margin: 0;
+    padding: 0;
+}
+span{
+    font-size: 0.8rem;
+}
+textarea{
+    outline: medium;
+    resize: none;
+}
+.ZC_add_delete1 {
+    float: right;
+    height: 100%;
+    margin: 0 0.8% 0 0;
+    border: 1px solid #76c5f0;
+}
+.flea_header {
+    width: 100%;
+    height: 5rem;
+    background-color: #ffffff;
+    line-height: 4rem;
+}
+.flea_header_r {
+    width: 99.6%;
+    float: left;
+    display: flex;
+    line-height: 5rem;
+    height: 5rem;
+}
+img.flea_addimg {
+    cursor: pointer;
+    float: left;
+    margin: 1.3rem 0 0 0.8rem;
+}
+.flea_header_r ul li {
+    width: 5rem;
+    float: left;
+    cursor: pointer;
+    margin: 1.4rem 0.5rem 0 0;
+    text-align: center;
+    font-size: 0.8rem;
+    line-height: 2rem;
+}
+#li2 {
+    float: right;
+}
+.flea_header_r ul li:hover{
+    border-bottom: 2px solid #7bc2ee;
+}
+li#li1 {
+    float: right;
+}
+.flea_liactive{
+    border-bottom: 2px solid #7bc2ee;
+}
+/*flea_header结束*/
+
+/*主体开始*/
+
+/*进行中的交易 开始*/
+.flea_content_1 {
+    height: auto;
+    margin: 1% 0 1% 0;
+    background-color: #ffffff;
+    display: flex;
+}
+.flea_mainimg {
+    flex: 1.1;
+    margin: 1% 0 0 1%;
+}
+.flea_mainimg_right {
+    flex: 1.6;
+    margin-right: 2%;
+}
+h1 {
+    margin: 0;
+    padding: 0;
+    font-size: 28px;
+}
+.flea_intro {
+    width: 100%;
+    height: 60px;
+    border-bottom: 1px solid #d5d5d5;
+}
+.flea_from {
+    margin: 1% 0 1% 0;
+    height: auto;
+    display: flex;
+}
+.flea_m {
+    float: left;
+    flex: 0.2;
+}
+.flea_m1 {
+    flex: 0.6;
+}
+.flea_from_div {
+    flex: 3;
+}
+.flea_mainimg_right span {
+    display: inline-block;
+    color: #979797;
+}
+.flea_from ul {
+    flex: 3;
+}
+.flea_from ul li {
+    color: #76c5f0;
+    float: right;
+    font-size: 0.8rem;
+}
+.flea_from_address {
+    float: right;
+    margin-left: 1rem;
+}
+.flea_click {
+    width: 10rem;
+    float: right;
+    margin-top: 1rem;;
+}
+.flea_again,.flea_delete {
+    width: 48%;
+    display: inline-block;
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    cursor: pointer;
+    color: #ffffff !important;
+    border-radius: 25px;
+    background-color: #76c5f0;
+}
+/*进行中的交易 结束*/
+
+
+/*发布新的交易 开始*/
+.publish_flea {
+    width: 100%;
+    height: auto;
+    padding-top: 1%;
+    background-color: #ffffff;
+}
+.publish_flea .publish_label {
+    height: auto;
+    padding: 1rem;
+    font-size: 0.8rem;
+    display: inline-block;
+    background-color: #e7e8ec;
+}
+.publish__content {
+    width: 100%;
+    height: auto;
+    padding-top: 1%;
+    background-color: #ffffff;
+}
+.div_img {
+    flex: 0.5;
+}
+.flea_ul{
+    float: left;
+    flex: 8;
+}
+.flea_name {
+    line-height: 2.1rem;
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    border: 1px solid #BBB8B8;
+    padding: 0;
+}
+.publish_add {
+    display: flex;
+    border: 1px solid #BBB8B8;
+}
+.publish_add span {
+    flex: 1;
+    color: #76c5f0;
+    display: inline-block;
+    font-size: 0.8rem;
+    margin-top: 2.4rem;
+    border-right: 1px solid #BBB8B8;
+}
+.publish_addImg {
+    flex: 8;
+}
+.publish_top_addimg {
+    float: left;
+    width: 6.25rem;
+    height: 6.25rem;
+    cursor: pointer;
+    border: 1px solid #76c5f0;
+}
+.commodity_name {
+    color: #76c5ee;
+    border-right: 1px solid #BBB8B8;
+    text-align: center;
+    font-size: 0.8rem;
+    display: inline-block;
+    flex: 1;
+}
+.commodity_inp {
+    border: none;
+    font-size: 0.8rem;
+    flex: 8;
+    outline: medium;
+    padding-left: 2%;
+    display: inline-block;
+}
+.publish_homepage {
+    margin: 0 auto;
+    width: 90%;
+    margin-top: 3% !important;
+}
+#publish_testimg{
+    cursor: pointer;
+}
+#publish_imgUpload{
+    width: 10rem;
+    height: 6.25rem;
+    float: left;
+    margin-left: 5rem;
+    border: 0.1rem solid #76c5f0;
+}
+#publish_img{
+    width: 100%;
+    height: 100%;
+}
+.flea_introduce {
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    margin-top: 0.5rem;
+    border: 1px solid #BBB8B8;
+}
+.commodity_jies {
+    flex: 1;
+    color: #76c5ee;
+    text-align: center;
+    margin-top: 3rem;
+    display: inline-block;
+}
+textarea#commodity_textarea {
+    flex: 9;
+    display: block;
+    outline: medium;
+    font-size: 14px;
+    resize: none;
+    padding: 5px;
+    line-height: 28px;
+}
+.flea_type {
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    margin-top: 2%;
+    border: 1px solid #BBB8B8;
+}
+.flea_type ,.cols_sp_price{
+    margin: 0 auto;
+    width: 90%;
+    /*max-height: 50px;*/
+    /*line-height: 50px;*/
+    display: flex;
+    margin-top: 1rem;
+    border: 1px solid #BBB8B8;
+}
+.commodity_type {
+    flex: 1;
+    color: #76c5ee;
+    margin-top: 0.7rem;
+    text-align: center;
+}
+.flea_type_ul {
+    flex: 8;
+    border-left: 1px solid #BBB8B8;
+    border-right: 1px solid #BBB8B8;
+}
+.money_reward {
+    flex: 1;
+    color: #76c5ee;
+    margin: 0.4rem;
+    width: 8%;
+    line-height: 30px;
+    border: 1px solid #BBB8B8;
+    text-align: center;
+    border-radius: 25px;
+    display: inline-table;
+}
+.flea_type_ul .lea_select{
+    float: left;
+    margin: 0.7rem 0.1rem 0 0.1rem;
+}
+.flea_type_ul li {
+    margin: 0.4rem 0.2rem 0.4rem 0.3rem;
+    line-height: 33px;
+    height: 1.6rem;
+    width: 4rem;
+    font-size: 0.8rem;
+    text-align: center;
+    border: 1px solid gray;
+    border-radius: 0.6rem;
+    cursor: pointer;
+}
+.flea_type_li{
+    background-color: #76c5f0;
+    color: #ffffff;
+    border: 1px solid #76c5f0 !important;
+}
+.sp_price {
+    display: flex;
+    flex: 3;
+}
+.sp_price .price {
+    flex: 2.5;
+    color: #76c5ee;
+    padding-top: 0.5rem;
+    text-align: center;
+}
+.sp_price .sp_input {
+    flex: 6;
+    font-size: 0.8rem;
+}
+.iphone_open {
+    flex: 6;
+    display: flex;
+}
+.iphone_open .iphone_span,.iphone_input,.iphone_ul{
+    float: left;
+}
+.iphone_span {
+    flex: 1;
+    padding-top: 0.5rem;
+    color: #76c5ee;
+}
+.iphone_input {
+    flex: 3;
+    font-size: 0.8rem;
+}
+.iphone_ul {
+    flex: 5;
+    display: flex;
+}
+.iphone_ul_li1,.iphone_ul_li2{
+    flex: 1.3;
+    text-align: center;
+    border: 1px solid #9C9C9C;
+    border-radius: 1.5rem;
+    margin:0 0.5rem 0.5rem;
+    line-height: 1.2rem;
+    height: 1.2rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+}
+.iphone_ul_span {
+    flex: 3;
+}
+.iphone_active{
+    background-color: #76c5f0;
+    color: #ffffff;
+    border: 1px solid #76c5f0 !important;
+}
+.flea_zcTime {
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    line-height: 2.2rem;
+    height: 2.2rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    border: 1px solid #BBB8B8;
+}
+.div_zcTime {
+    display: flex;
+    flex: 3;
+}
+.xiangou {
+    flex: 6;
+    display: flex;
+}
+.zcTime {
+    flex: 3.6;
+    color: #76C5EE;
+    text-align: center;
+}
+.zcTime_input {
+    flex: 9;
+    font-size: 0.8rem;
+}
+.xiangou_span {
+    flex: 1;
+    color: #76c5ee;
+}
+.xiangou_ul {
+    flex: 8;
+    display: flex;
+    padding: 0.5rem;
+    border-left: 1px solid #d5d5d5;
+}
+.xiangou_ul_li1,.xiangou_ul_li2{
+    flex: 1;
+    text-align: center;
+    border: 1px solid #9C9C9C;
+    border-radius: 1.1rem;
+    line-height: 1.2rem;
+    height:1.2rem;
+    cursor: pointer;
+}
+.xiangou_ul_span {
+    flex: 5;
+}
+.xiangou_active{
+    background-color: #76c5f0;
+    color: #ffffff;
+    border: 1px solid #76c5f0 !important;
+}
+.xiangou_ul_li2 {
+    margin-left: 0.5rem;
+}
+.flea_addTW {
+    margin: 0 auto;
+    width: 90%;
+    display: flex;
+    margin-top: 2%;
+    border: 1px solid #BBB8B8;
+}
+.add_TW {
+    height: 100%;
+    line-height: 5rem;
+    flex: 0.9;
+    float: left;
+    border-right: 1px solid #BBB8B8;
+    color: #76c5ee;
+    text-align: center;
+}
+.fleaAdd {
+    flex: 9;
+}
+.div_1{
+    height: 102px;
+}
+#add_textarea1 {
+    height: 5rem;
+    line-height:1.2rem;
+    width: 72.6%;
+    margin: 0;
+}
+.ZC_add_delete2{
+    float: right;
+    height: 100%;
+    margin: 1% 0.8% 0 0;
+    border: 1px solid #76c5f0;
+}
+.ZC_add_delete3{
+    float: right;
+    height: 100%;
+    margin: 1% 0.8% 0 0;
+    border: 1px solid #76c5f0;
+}
+.ZC_add_input {
+    height: 96px;
+    font-size: 19px;
+    line-height: 26px;
+    width: 74%;
+}
+#add_textarea3 {
+    margin-left: -1.4%;
+}
+.flea_fb {
+    margin-top: 2%;
+}
+.flea_fb p {
+    padding: 0;
+    display: block;
+    width: 15%;
+    text-align: center;
+    line-height: 50px;
+    color: #ffffff;
+    margin: 0 auto;
+    font-size: 26px;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: #76c5f0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

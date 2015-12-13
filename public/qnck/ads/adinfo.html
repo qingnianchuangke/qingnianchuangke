@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>广告明细</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/common.js"></script>
+    <style type="text/css">
+        body {
+            background-color: #EFF0F4;
+            color: #959796;
+        }
+    </style>
+    <script type="text/javascript">
+    $(document).ready(function () {
+        var type = GetQueryString("type");
+        var imgid = GetQueryString("imgid");
+        if(type=="app"){
+            $("#btnShare").show();
+            $("#btnDown").hide();
+        }else{
+            $("#btnDown").show();
+            $("#btnShare").hide();
+        }
+        $("#adimg").attr("src","images/"+imgid+".jpg");
+    });
+    function share(){
+        try 
+        { 
+            appObject.shareOnAndroid(1);
+        } 
+        catch (e) 
+        {
+        } 
+    }
+    function download(){
+        window.location.href='http://www.54qnck.com/qnck/download.html';
+    }
+    </script>
+</head>
+<body>
+    <div id="content">
+        <img id="adimg" src="" style="width: 100%;" />
+        <div style="font-size:24px;color:white;background-color:#6FB6E2;border-radius: 15px;text-align:center;padding:10px 0px;width:100%;" id="btnShare" onclick="share()">分享</div>
+        <div style="font-size:24px;color:white;background-color:#6FB6E2;border-radius: 15px;text-align:center;padding:10px 0px;width:100%;" id="btnDown" onclick="download()">下载青年创</div>
+    </div>
+    
+</body>
+</html>

@@ -1,0 +1,795 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css">
+<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../js/common.js"></script>
+<script type="text/javascript" src="../js/jquery.form.js"></script>
+<script type="text/javascript" src="../js/Generation_Guid.js"></script>
+<title>众筹管理</title>
+<style>
+    table.altrowstable {
+		font-family: verdana,arial,sans-serif;
+		font-size:11px;	
+		color:#333333;
+		border-width: 1px;
+		border-color: #a9c6c9;
+		border-collapse: collapse;
+	}
+	table.altrowstable td {
+		border-width: 1px;
+		padding: 8px;
+		border-style: solid;
+		border-color: #a9c6c9;
+	}
+	.rightTd{
+		width: 685px;
+		background-color:#d4e3e5;
+		border-bottom:1px solid red
+	}
+	.leftTd{
+		text-align: right;
+		width: 100px;
+		background-color:#c3dde0;
+	}
+</style>
+<script>
+	$(document).ready(function(e) {
+		BindData();
+		$("#tt").datagrid('getPager').pagination({
+			onSelectPage:function(pageNum, pageSize){
+				BindData();
+			}
+		});
+		var d1 = myformatter(new Date());
+    	$('#active_at').datetimebox('setValue',d1);
+        bindProvince();
+        bindProvince2();
+    });
+    function BindData(){
+    	var pageNumber = $("#tt").datagrid('getPager').data("pagination").options.pageNumber;
+		var pageSize = $("#tt").datagrid('getPager').data("pagination").options.pageSize;
+		$.ajax({
+			type: "get",
+			url: _url+'office/crowd',
+			data: {page:pageNumber,per_page:pageSize,filter_option:1},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+					$("#tt").datagrid("loadData", result.data);
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+	function ckeckValue(obj) {
+		var e=$(obj);
+		if(e.attr("id")=="price" || e.attr("id")=="quantity"){
+			var price = $("#price").val();
+			var quantity = $("#quantity").val();
+			price = price == "" ? "0" : price;
+			quantity = quantity == "" ? "0" : quantity;
+			$("#amount").val(price*quantity);
+		}
+		if(e.attr("data-validate")){
+			e.closest('.field').find(".input-help").remove();
+			var $checkdata=e.attr("data-validate").split(',');
+			var $checkvalue=e.val();
+			var $checkstate=true;
+			var $checktext="";
+			if(e.attr("placeholder")==$checkvalue){$checkvalue="";}
+			if($checkvalue!="" || e.attr("data-validate").indexOf("required")>=0){
+				for(var i=0;i<$checkdata.length;i++){
+					var $checktype=$checkdata[i].split(':');
+					if(! $pintuercheck(e,$checktype[0],$checkvalue)){
+						$checkstate=false;
+						$checktext=$checktext+"<li>"+$checktype[1]+"</li>";
+					}
+				}
+			};
+			if($checkstate){
+				e.closest('.form-group').removeClass("check-error");
+				e.parent().find(".input-help").remove();
+				e.closest('.form-group').addClass("check-success");
+			}else{
+				e.closest('.form-group').removeClass("check-success");
+				e.closest('.form-group').addClass("check-error");
+				e.closest('.field').append('<div class="input-help"><ul>'+$checktext+'</ul></div>');
+			}
+		}
+	}
+	function myformatter(date){
+        var y = date.getFullYear();  
+        var m = date.getMonth()+1;  
+        var d = date.getDate();  
+        var h = date.getHours();  
+        var min = date.getMinutes();  
+        var sec = date.getSeconds();  
+        var str = y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d)+' '+(h<10?('0'+h):h)+':'+(min<10?('0'+min):min)+':'+(sec<10?('0'+sec):sec);  
+        // var str = y+'-'+(m<10?('0'+m):m)+'-'+(d<10?('0'+d):d)+' '+(h<10?('0'+h):h)+'点';  
+        return str;
+    }
+    function fbfwClick (obj) {
+    	$(obj).siblings().css("background-color","#fff").attr("ck","0");
+    	$(obj).css("background-color","#76C5F0").attr("ck","1");
+    	if($(obj).attr("fbfw")=="cs"){
+    		$('#choose-city-dlg').dialog('open');
+    	}
+    	else if($(obj).attr("fbfw")=="xx"){
+    		$('#choose-school-dlg').dialog('open');
+    	}
+    }
+    function sfpsClick(obj){
+    	$(obj).siblings().css("background-color","#fff").attr("ck","0");
+    	$(obj).css("background-color","#76C5F0").attr("ck","1");
+    	if($(obj).attr("sfps")=="s"){
+    		$('#shipping_fee').focus();
+    	}
+    }
+    function zsfwClick(obj){
+    	if($(obj).attr("ck")=="1")
+    		$(obj).css("background-color","#fff").attr("ck","0");
+    	else
+    		$(obj).css("background-color","#76C5F0").attr("ck","1");
+    }
+    function bindProvince(){
+    	$.ajax({
+			type: "get",
+			url: _url+'office/dic/province',
+			data: {},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+				{
+					var r = "";
+					$(result.data).each(function(){
+						r+="<p style='cursor:pointer;' onclick='bindCity("+this.id+")'>"+this.name+"</p>";
+					});
+					$("#provinceDiv").html(r);
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+    function bindCity (pid) {
+    	$.ajax({
+			type: "get",
+			url: _url+'office/dic/city',
+			data: {province:pid},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+				{
+					var r = "";
+					$(result.data).each(function(){
+						r+='<div style="cursor:pointer; border:1px solid #95B8E7;padding:5px 10px;margin-left:13px;margin-top:5px;width:120px;text-align:center;float:left;" id="'+pid+"_"+this.id+'" pid="'+pid+'" cid="'+this.id+'" onclick="chooseCity(this)">'+this.name+'</div>';
+					});
+					$("#cityDiv").html(r+"<div style='clear:both;'></div>");
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+    function chooseCity(obj){
+    	if($($(obj).parent()).attr("id")=="cityDiv"){
+    		if($("#choosedcityDiv" ).children("#"+$(obj).attr("id")).length<=0)
+    			$("#choosedcityDiv").append(obj);
+    		else
+    			$(obj).remove();
+    	}else{
+    		$("#cityDiv").append(obj);
+    	}
+    }
+    //bind provice
+    function bindProvince2(){
+    	$.ajax({
+			type: "get",
+			url: _url+'office/dic/province',
+			data: {},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+				{
+					var r = "";
+					$(result.data).each(function(){
+						r+="<p style='cursor:pointer;' onclick='bindCity2("+this.id+")'>"+this.name+"</p>";
+					});
+					$("#provinceDiv2").html(r);
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+    //bind city
+    function bindCity2(pid) {
+    	$.ajax({
+			type: "get",
+			url: _url+'office/dic/city',
+			data: {province:pid},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+				{
+					var r = "";
+					$(result.data).each(function(){
+						r+="<p style='cursor:pointer;padding-left:10px;' onclick='bindSchool("+pid+","+this.id+")'>"+this.name+"</p>";
+					});
+					$("#cityDiv2").html(r+"<div style='clear:both;'></div>");
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+    //bind school
+    function bindSchool(pid,cid) {
+    	$.ajax({
+			type: "get",
+			url: _url+'office/dic/school',
+			data: {province:pid,city:cid},
+			dataType: "json",
+			success: function (result) {
+				if(result.result=="2000")
+				{
+					var r = "";
+					$(result.data).each(function(){
+						r+='<div style="cursor:pointer; border:1px solid #95B8E7;padding:5px 10px;margin-left:13px;margin-top:5px;width:220px;text-align:center;float:left;" id="'+this.id+'" onclick="chooseSchool(this)">'+this.school_name+'</div>';
+					});
+					$("#schoolDiv").html(r+"<div style='clear:both;'></div>");
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+    }
+    //选择学校
+    function chooseSchool(obj){
+    	if($($(obj).parent()).attr("id")=="schoolDiv"){
+    		if($("#choosedschoolDiv" ).children("#"+$(obj).attr("id")).length<=0)
+    			$("#choosedschoolDiv").append(obj);
+    		else
+    			$(obj).remove();
+    	}else{
+    		$("#schoolDiv").append(obj);
+    	}
+    }
+    function toolBarClick(ty){
+    	$("#displayinfo").attr("fnty", ty);
+		switch (ty) {
+			case "resh"://刷新
+				BindData();
+				break;
+			case "add"://添加
+				$('#ad-dlg').dialog({ title: "添加广告" });
+				clearAllInputValue();
+				$('#ad-dlg').dialog('open');
+				break;
+			case "upd"://更新
+				$.messager.alert("提示", "暂不提供编辑功能", "alert");
+				// var sdata = $("#tt").datagrid("getSelected");
+				// if (sdata) {
+				// 	clearAllInputValue();
+				// 	putDataToWindow(sdata);
+				// 	$('#user-dlg').dialog({ title: "编辑广告" });
+				// 	$('#ad-dlg').dialog('open');
+				// } else {
+				// 	$.messager.alert("提示", "请选择要编辑的广告！", "alert");
+				// }
+				break;
+			case "del"://删除
+				var sdata = $("#tt").datagrid("getSelected");
+				if (sdata) {
+					deleteAd(sdata.id);
+				} else {
+					$.messager.alert("提示", "请选择要删除的众筹！", "alert");
+				}
+				break;
+			default:
+				break;
+		}
+    }
+    function clearAllInputValue(){
+		$("#zcname").val("");//众筹名称
+		$("#logoPic").attr("src","");//展示图片
+		$("#fileDiv").html('<input type="file" id="imgUpload" name="cover_img" draggable="true" single/>');
+        $("#imgUpload").change(function (e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#logoPic").attr({'src': e.target.result});
+            };
+            reader.readAsDataURL(file);
+        });
+        $("#contentDiv").html("");
+        createContentDiv();
+		$("#price").val("");//众筹金额
+		$("#quantity").val("");//众筹份数
+		$("#amount").val("0");//众筹总额
+		$("#time").val("");//众筹天数
+		$("#yield_time").val("");//回报天数
+		$("span[name='sfps']").css("background-color","#fff").attr("ck","0");//是否配送
+		$("span[name='sfps']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否配送
+		$("#shipping_fee").val("0");//配送费用
+		$("#brief").val("");//众筹介绍
+		$("#yield_desc").val("");//回报内容
+		$("span[name='sfxg']").css("background-color","#fff").attr("ck","0");//是否限购
+		$("span[name='sfxg']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否限购
+		$("span[name='fbfw']").css("background-color","#fff").attr("ck","0");//全国
+		$("span[name='fbfw']").eq(0).css("background-color","#76C5F0").attr("ck","1");//全国
+		$("#cityDiv").html("");//发布范围-城市
+		$("#choosedcityDiv").html("");//发布范围-城市
+		$("#schoolDiv").html("");//发布范围-学校
+		$("#cityDiv2").html("");//发布范围-学校
+		$("#choosedschoolDiv").html("");//发布范围-学校
+		// var d1 = myformatter(new Date());
+  		//$('#active_at').datetimebox('setValue',d1);//开始时间
+    }
+    var contentindex = 1;
+    function createContentDiv(){
+        $("#contentDiv").append('<div><div><img class="crowd_img_'+contentindex+'" ondblclick="deleteDom(this)" src="" width="160" height="100" /><textarea id="crowd_txt_'+contentindex+'" rows="6" cols="60"></textarea></div><div><input onclick="javascript:choosePic('+contentindex+');" type="file" id="crowd_img_'+contentindex+'"" name="crowd_img_'+contentindex+'" draggable="true" single/></div></div>');
+    	contentindex++;
+    }
+    function deleteDom(obj){
+    	// $($(obj).parent().parent()).remove();
+    	// var len = $("#contentDiv").children().length;
+     //    if(len<3)
+     //    	createContentDiv();
+    }
+    function choosePic(i){
+    	$("#crowd_img_"+i).change(function (e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $(".crowd_img_"+i).attr({'src': e.target.result});
+            };
+            reader.readAsDataURL(file);
+            var len = $("#contentDiv").children().length;
+            if(i==contentindex-1 && len<6)
+            	createContentDiv();
+        });
+    }
+    function putDataToWindow(sdata){
+
+    }
+    function deleteAd(id){
+    	$.messager.confirm("提示", "确认删除选中众筹！", function (r) {
+			if (r) {
+				$.ajax({
+					type: "delete",
+					url: _url+'office/crowd/'+id,
+					data: {},
+					dataType: "json",
+					success: function (result) {
+						$.messager.alert('提示', result.info, 'info');
+						if(result.result=="2000"){
+							BindData();
+						}
+					},
+					error: function () {
+						$.messager.alert('提示', "调用删除众筹接口失败！", 'info');
+					}
+				});
+			}
+		});
+    }
+    //保存
+    function saveClick(){
+    	$('#adTable').find('input,textarea').trigger("blur");
+		var numError = $('#adTable').find('.check-error').length;
+		if(numError){
+			$('#adTable').find('.check-error').first().find('input').first().focus().select();
+			return;
+		}
+		var title=$("#zcname").val();//众筹名称
+		var amount=$("#amount").val();//众筹总额
+		var time=$("#time").val();//众筹天数
+		var yield_time=$("#yield_time").val();//回报时间
+		var shipping = "0";//是否配送 0-否 1-是
+		$("span[name='sfps']").each(function (){
+			if($(this).attr("ck")=="1")
+				shipping = $(this).attr("value");
+		});
+		var shipping_fee=$("#shipping_fee").val();//运费
+		var brief=$("#brief").val();//众筹介绍
+		var yield_desc=$("#yield_desc").val();//回报内容
+		var open_file="0";//是否公开资料 0-否 1-是
+		var price=$("#price").val();//众筹金额
+		var quantity=$("#quantity").val();//众筹份数
+		var is_limit="0";//是否限购 0-否 1-是
+		$("span[name='sfxg']").each(function (){
+			if($(this).attr("ck")=="1")
+				is_limit = $(this).attr("value");
+		});
+		var active_at=$('#active_at').datetimebox('getValue');//众筹开始时间
+		var local_only="0";//是否限制本校
+		var imgpath = $("#imgUpload").val();
+    	if(imgpath==""){
+        	$.messager.alert("提示", "请上传首页展示图", "alert");
+        	return;
+    	}
+    	var extStart=imgpath.lastIndexOf(".");
+    	var ext=imgpath.substring(extStart,imgpath.length).toUpperCase();
+		if(ext!=".BMP"&&ext!=".PNG"&&ext!=".GIF"&&ext!=".JPG"&&ext!=".JPEG"){
+        	$.messager.alert("提示", "首页展示图限于bmp,png,gif,jpeg,jpg格式", "alert");
+			return;
+		}
+		var cate="crowd_funding";//固定传crowd_funding
+		var content="{";//图文部分的文字信息
+	    var img_token=Guid.NewGuid().ToString();//图片上传token
+		var count=0;
+		$($("#contentDiv").children()).each(function (){
+			var filecontent = $(this).children().eq(0).children().eq(1);
+			var filedom = $(this).children().eq(1).children().eq(0);
+			if(filedom.val()!=""){
+				count++;
+				var key = filedom.attr("id");
+				var value = filecontent.val().replace(/\n/g,"\\n");
+			    // var s = value.replace(/\n/g,"<br/>");
+
+				content+='"'+key+'":"'+value+'",';
+			}
+		});
+		if(content!="{") content = content.substring(0,content.length-1);
+		content += "}";
+		if(count==0){
+			$.messager.alert("提示", "请至少上传一个图文内容！", "alert");
+			return;
+		}
+		var range = "";
+		var cities = "";
+		var schools = "";
+		//发布范围
+		$("span[name='fbfw']").each(function (){
+			if($(this).attr("ck")=="1"){
+				switch($(this).attr("fbfw")){
+					case "qg":
+						range="1";
+						break;
+					case "cs":
+						range="2";
+						$($("#choosedcityDiv").children()).each(function(){
+							cities += $(this).attr("cid")+"|"+$(this).attr("pid")+",";
+						});
+						break;
+					case "xx":
+						range="3";
+						$($("#choosedschoolDiv").children()).each(function(){
+							schools += $(this).attr("id")+",";
+						});
+						break;
+				}
+			}
+		});
+		if(cities!="") cities = cities.substring(0,cities.length-1);
+		if(schools!="") schools = schools.substring(0,schools.length-1);
+		var fnty = $("#displayinfo").attr("fnty");//读取操作类型
+		if (fnty == "add") {
+		    var img_token=Guid.NewGuid().ToString();
+
+		    var f = document.createElement("form");
+		    f.action = _url+"img?img_token="+img_token+"&cate=event";
+		    f.method = "post";
+		    f.enctype="multipart/form-data";
+    		$($("#imgUpload")).appendTo(f);
+    		
+
+    		$(f).ajaxSubmit(function(s){
+		        if(s.result=="2000");
+		        {
+		        	var f2 = document.createElement("form");
+				    f2.action = _url+"img?img_token="+img_token+"&cate="+cate;
+				    f2.method = "post";
+				    f2.enctype="multipart/form-data";
+		        	$($("#contentDiv").children()).each(function (){
+						var filedom = $(this).children().eq(1).children().eq(0);
+						if(filedom.val()!=""){
+							filedom.appendTo(f2);
+						}
+					});
+					$(f2).ajaxSubmit(function(s2){
+				        if(s2.result=="2000");
+				        {
+				            $.ajax({
+				                type: "post",
+				                url: _url+"office/crowd",
+				                data: {range:range,cities:cities,schools:schools,title:title,amount:amount,time:time,yield_time:yield_time,shipping:shipping,shipping_fee:shipping_fee,brief:brief,yield_desc:yield_desc,content:content,open_file:open_file,price:price,quantity:quantity,is_limit:is_limit,active_at:active_at,local_only:local_only,img_token:img_token},
+				                dataType: "json",
+				                success: function (r) {
+			                        $.messager.alert("提示", r.info, "alert");
+				                    if(r.result=="2000"){
+				                        $('#ad-dlg').dialog('close');
+				                        BindData();
+				                    }
+				                },
+				                error: function () {
+			                        $.messager.alert("提示", "调用添加众筹接口失败", "alert");
+				                }
+				            });
+				        }
+				    });
+		        }
+		    });
+		}
+    }
+    function formatRange(value,row){
+		var r = "";
+    	// if(value=="1"){
+    		r = "全国,";
+  //   	}
+		// else if(value=="2")
+		// {
+		// 	$(row.ranges).each(function(){
+		// 		r += this.city.name+",";
+		// 	});
+		// }
+		// else if(value=="3")
+		// {
+		// 	$(row.ranges).each(function(){
+		// 		r += this.school.school_name+",";
+		// 	});
+		// }
+		if(r!="") r = r.substring(0,r.length-1);
+		return r;
+    }
+</script>
+</head>
+
+<body>
+<table id="tt" title="官方发布众筹列表" class="easyui-datagrid" data-options="
+            rownumbers:true,
+            fit:true,
+            singleSelect:true,
+            pagination:true,
+            pageSize:20,
+            nowrap:false,
+            idField:'id',
+            toolbar:'#optionTollbar'">
+    <thead>
+        <tr>
+            <th data-options="field:'id',width:40,align:'left',halign:'center'">id</th>
+            <th data-options="field:'title',width:200,align:'left',halign:'center'">众筹名称</th>
+            <th data-options="field:'cate_label',width:100,align:'left',halign:'center'">众筹分类</th>
+            <th data-options="field:'price',width:100,align:'left',halign:'center'">支持金额</th>
+          	<th data-options="field:'target_quantity',width:100,align:'left',halign:'center'">众筹份数</th>
+            <th data-options="field:'sold_quantity',width:100,align:'left',halign:'center'">已筹份数</th>
+            <th data-options="field:'is_limit',width:100,align:'left',halign:'center'">是否限购</th>
+            <th data-options="field:'target_amount',width:100,align:'left',halign:'center'">众筹总额</th>
+          	<th data-options="field:'time',width:100,align:'left',halign:'center'">众筹天数</th>
+          	<th data-options="field:'active_at',width:100,align:'left',halign:'center'">众筹开始时间</th>
+            <th data-options="field:'range',width:200,align:'left',halign:'center',formatter:formatRange">发布范围</th>
+        </tr>
+    </thead>
+</table>
+<div id="optionTollbar" style="height: auto;">
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="toolBarClick('resh');">刷新</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-add'" onclick="toolBarClick('add');">添加</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-edit'" onclick="toolBarClick('upd');">编辑</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-remove'" onclick="toolBarClick('del');">删除</a>
+</div>
+
+<!-- 添加/编辑窗口 Start -->
+<div id="ad-dlg" class="easyui-dialog" title="添加众筹" style="width: 860px; height: 460px; padding: 5px"
+    data-options="
+        closed:true,
+        modal:true,
+        iconCls: 'icon-save',
+        buttons: '#ad-dlg-buttons'
+    ">
+    <div>
+        <div id="displayinfo" fnty="add" style="display: none;">信息存储隐藏层</div>
+	    <table class="altrowstable" id="adTable">
+	        <tr>
+	            <td class="leftTd">众筹名称</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="zcname" placeholder="众筹名称" data-validate="required:请填写众筹名称" onblur="ckeckValue(this);"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">首页图片</td>
+	            <td class="rightTd">
+			        <img id="logoPic" src="" width="160" height="100" />
+			        <div id="fileDiv">
+                    </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹金额</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="price" placeholder="众筹金额" data-validate="required:请填写众筹金额" onblur="ckeckValue(this);"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹份数</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="quantity" placeholder="众筹份数" data-validate="required:请填写众筹份数" onblur="ckeckValue(this);"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹总额</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="amount" readonly="readonly"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹天数</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="time" placeholder="众筹天数" data-validate="required:请填写众筹天数" onblur="ckeckValue(this);"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">回报天数</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="yield_time" placeholder="回报天数" data-validate="required:请填写回报天数" onblur="ckeckValue(this);"/>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">是否配送</td>
+	            <td class="rightTd">
+			        <span name="sfps" value="1" onclick="sfpsClick(this)" ck="1" style="float:left;padding:2px 10px;border-radius:5px;border:0px;cursor:pointer;text-align:center;background-color:#76C5F0;">是</span>
+			        <span name="sfps" value="0" onclick="sfpsClick(this)" ck="0" style="margin-left:10px;padding:2px 10px;float:left;border-radius: 5px;border:0px;cursor:pointer;text-align:center;background-color:#fff;">否</span>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">运费</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			        		<input type="text" class="input" id="shipping_fee" value="0" />
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹介绍</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			          		<input type="text" id="brief" placeholder="众筹介绍" style="width:600px" data-validate="required:请填写众筹介绍" onblur="ckeckValue(this);"></input>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">回报内容</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+			          		<input type="text" id="yield_desc" placeholder="回报内容" style="width:600px" data-validate="required:请填写回报内容" onblur="ckeckValue(this);"></input>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">是否限购</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+				        <span name="sfxg" value="1" onclick="sfpsClick(this)" ck="1" style="float:left;padding:2px 10px;border-radius:5px;border:0px;cursor:pointer;text-align:center;background-color:#76C5F0;">是</span>
+				        <span name="sfxg" value="0" onclick="sfpsClick(this)" ck="0" style="margin-left:10px;padding:2px 10px;float:left;border-radius: 5px;border:0px;cursor:pointer;text-align:center;background-color:#fff;">否</span>
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">众筹开始时间</td>
+	            <td class="rightTd">
+			        <div class="form-group">
+			          <div class="field field-icon-right">
+	            			<input class="easyui-datetimebox" id="active_at" editable="false" data-options="formatter:myformatter" style="width:200px">
+			          </div>
+			        </div>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">发布范围</td>
+	            <td class="rightTd">
+			        <span name="fbfw" fbfw="qg" onclick="fbfwClick(this)" ck="1" style="float:left;padding:2px 10px;border-radius:5px;border:0px;cursor:pointer;text-align:center;background-color:#76C5F0;">全国</span>
+			        <span name="fbfw" fbfw="cs" onclick="fbfwClick(this)" ck="0" style="margin-left:10px;padding:2px 10px;float:left;border-radius: 5px;border:0px;cursor:pointer;text-align:center;background-color:#fff;">城市</span>
+			        <span name="fbfw" fbfw="xx" onclick="fbfwClick(this)" ck="0" style="margin-left:10px;padding:2px 10px;float:left;border-radius: 5px;border:0px;cursor:pointer;text-align:center;background-color:#fff;">学校</span>
+	            </td>
+	        </tr>
+	        <tr>
+	            <td class="leftTd">图文内容</td>
+	            <td class="rightTd">
+			        <div id="contentDiv"></div>
+	            </td>
+	        </tr>
+	    </table>
+    </div>
+</div>
+<div id="ad-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" onclick="saveClick();">保存</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#ad-dlg').dialog('close');">取消</a>
+</div>
+<!-- 添加/编辑窗口 End -->
+
+
+<div id="choose-city-dlg" class="easyui-dialog" title="城市选择" style="width: 460px; height: 460px; padding: 5px"
+    data-options="
+        closed:true,
+        modal:true,
+        iconCls: 'icon-save',
+        buttons: '#choose-city-dlg-buttons'
+    ">
+    <div class="easyui-layout" style="width: 100%; height: 100%;">
+        <div id="provinceDiv" data-options="region:'west',collapsible:false" title="省份" style="width: 80px;padding:10px;">
+        </div>
+        <div data-options="region:'center',collapsible:false" style="width: 350px;">
+        	 <div class="easyui-layout" data-options="fit:true">
+                <div id="cityDiv" data-options="region:'north',split:true,collapsible:false" title="城市" style="height:200px"></div>
+                <div id="choosedcityDiv" data-options="region:'center'" title="已选城市"></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="choose-city-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" onclick="$('#choose-city-dlg').dialog('close');">确认</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#choose-city-dlg').dialog('close');">关闭</a>
+</div>
+
+
+<div id="choose-school-dlg" class="easyui-dialog" title="学校选择" style="width: 460px; height: 460px; padding: 5px"
+    data-options="
+        closed:true,
+        modal:true,
+        iconCls: 'icon-save',
+        buttons: '#choose-school-dlg-buttons'
+    ">
+    <div class="easyui-layout" style="width: 100%; height: 100%;">
+        <div id="provinceDiv2" data-options="region:'west',collapsible:false" title="省份" style="width: 80px;padding:10px;">
+        </div>
+        <div data-options="region:'east',collapsible:false" style="width:280px;">
+        	<div class="easyui-layout" data-options="fit:true">
+                <div id="schoolDiv" data-options="region:'north',split:true,collapsible:false" title="学校" style="height:200px"></div>
+                <div id="choosedschoolDiv" data-options="region:'center'" title="已选学校"></div>
+            </div>
+        </div>
+        <div id="cityDiv2" data-options="region:'center',collapsible:false" title="城市">
+        	 
+        </div>
+    </div>
+</div>
+<div id="choose-school-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-ok'" onclick="$('#choose-school-dlg').dialog('close');">确认</a>
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#choose-school-dlg').dialog('close');">关闭</a>
+</div>
+
+
+</body>
+</html>

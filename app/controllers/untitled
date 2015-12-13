@@ -1,0 +1,19 @@
+token : 当前登录用户token
+u_id : 当前登录用户id
+name : 真实姓名
+id_number : 身份证号码
+id_school : 学校id
+mobile : 手机号码
+entry_year : 入学时间
+age : 年龄
+major : 专业
+stu_num : 学生证号码
+emergency_name : 紧急联系人信息
+emergency_phone : 紧急联系人电话
+father_name : 父亲姓名
+father_phone : 父亲电话
+mother_name : 母亲姓名
+mother_phone : 母亲电话
+apartment_no : 宿舍号
+club_title : 
+club_brief

@@ -12,6 +12,7 @@ class MeFriendController extends \BaseController {
         $u_id = Input::get('u_id', 0);
         $token = Input::get('token', '');
         $ver = Input::get('ver', 0);
+        $gender = Input::get('gender');
 
         try {
             $user = User::chkUserByToken($token, $u_id);
@@ -31,7 +32,7 @@ class MeFriendController extends \BaseController {
                 return Response::json(['result' => 2000, 'data' => [], 'info' => '获取我的好友列表成功', 'ver' => $ver]);
             }
             
-            $data = $this->getUserList($u_id, 2);
+            $data = $this->getUserList($u_id, 2, $gender);
 
             $re = ['result' => 2000, 'data' => $data, 'info' => '获取我的好友列表成功', 'ver' => $sum];
         } catch (Exception $e) {
@@ -49,10 +50,11 @@ class MeFriendController extends \BaseController {
         $u_id = Input::get('u_id', 0);
         $token = Input::get('token', '');
         $ver = Input::get('ver', 0);
+        $gender = Input::get('gender', 0);
 
         try {
             $user = User::chkUserByToken($token, $u_id);
-            $data = $this->getUserList($u_id);
+            $data = $this->getUserList($u_id, 0, $gender);
 
             $list = UserFriendInviteLog::where('u_id', '=', $u_id)->get();
             $logs = [];
@@ -248,7 +250,7 @@ class MeFriendController extends \BaseController {
         return Response::json($re);
     }
 
-    private function getUserList($u_id, $status = 0)
+    private function getUserList($u_id, $status = 0, $gender = 0)
     {
         $query = UsersFriend::with(['user1', 'user2']);
         if ($status) {
@@ -269,6 +271,9 @@ class MeFriendController extends \BaseController {
                 $tmp = $userLink->user2->showInList();
             } else {
                 $tmp = $userLink->user1->showInList();
+            }
+            if ($gender && $tmp['gender'] != $gender) {
+                continue;
             }
             $tmp['status'] = $type;
             $data[] = $tmp;

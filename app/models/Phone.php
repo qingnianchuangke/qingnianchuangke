@@ -41,7 +41,7 @@ class Phone extends Eloquent
      * send text message
      * @author Kydz 2015-06-14
      * @param  string $content   text message
-     * @param  int $sendLevel how fast will this message been sent
+     * @param  int $sendLevel how soon will this message been sent
      * @return bool
      */
     public function sendText($content, $sendLevel = TxtMessage::SEND_NORMAL)

@@ -76,7 +76,7 @@ class Repayment extends Eloquent
             throw new Exception("没有找到相关的基金信息", 10001);
         }
         // do transaction
-        $userBankCard = UsersBankCard::where('u_id', '=', $fund->u_id)->first();
+        $userBankCard = UserProfileBankcard::find($fund->u_id);
         if (empty($userBankCard)) {
             throw new Exception("没有找到用户相关的银行卡信息", 10001);
         }

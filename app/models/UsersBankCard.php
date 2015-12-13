@@ -11,7 +11,7 @@ class UsersBankCard extends Eloquent
     public function showInList()
     {
         $data = [];
-        $data['card_number'] = $this->b_card_num;
+        $data['card_number'] = $this->b_card_number;
         if (!empty($this->bank)) {
             $data['bank'] = $this->bank->showInList();
         }

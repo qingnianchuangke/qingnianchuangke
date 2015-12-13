@@ -6,13 +6,14 @@ class AppController extends \BaseController
 {
     public function getConfig()
     {
-
+        $base_url = Config::get('app.url');
         $init['app_ver'] = Config::get('app.app.android.ver');
         $init['api_ver'] = 'v0';
         $init['force_upgrade'] = 1;
-        $init['init_img'] = 'http://qnck001.oss-cn-hangzhou.aliyuncs.com/welcome.jpg';
+        $init['init_img'] = '';
+        $init['share_link'] = $base_url.'banner/1';
         $init['app_download_link'] = 'http://qnck001.oss-cn-hangzhou.aliyuncs.com/app/android/'.Config::get('app.app.android.file_name');
-        $init['desc'] = '新加了个若干功能, 修复了若干bug';
+        $init['desc'] = '检测到新版本';
 
         $data['init'] = $init;
         $data['other'] = null;
@@ -44,7 +45,8 @@ class AppController extends \BaseController
         $name = Config::get('app.app.android.file_name');
         header('Content-Type: application/vnd.android.package-archive');
         header('Content-Disposition:attachment;filename="qnck.apk"');
-        readfile('http://qnck001.oss-cn-hangzhou.aliyuncs.com/app/android/'.$name);
+        header('Content-Length: 4000000');
+        readfile('http://qnck001.oss-cn-hangzhou-internal.aliyuncs.com/app/android/'.$name);
         exit();
     }
 }

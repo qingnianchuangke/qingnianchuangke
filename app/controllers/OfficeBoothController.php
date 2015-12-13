@@ -15,10 +15,14 @@ class OfficeBoothController extends \BaseController
             $query = Booth::with(['fund' => function ($q) {
             },
             'fund.loans',
-            'user'])->select('booths.*');
+            'user'])->select('booths.*', 'tmp_user_profile_bases.u_status AS base_status', 'tmp_user_profile_bankcards.b_status AS bank_status');
 
             $query = $query->leftJoin('funds', function ($q) {
                 $q->on('funds.b_id', '=', 'booths.b_id');
+            })->leftJoin('tmp_user_profile_bases', function ($q) {
+                $q->on('tmp_user_profile_bases.u_id', '=', 'booths.u_id');
+            })->leftJoin('tmp_user_profile_bankcards', function ($q) {
+                $q->on('tmp_user_profile_bankcards.u_id', '=', 'booths.u_id');
             });
 
             if ($alloc == 1) {
@@ -30,7 +34,12 @@ class OfficeBoothController extends \BaseController
             $list = $query->paginate($per_page);
             $data['rows'] = [];
             foreach ($list as $key => $booth) {
-                $data['rows'][] = $booth->showInOffice();
+                $tmp = $booth->showInOffice();
+                if (!empty($tmp['user'])) {
+                    $tmp['user']['base_status'] = $booth->base_status;
+                    $tmp['user']['bank_status'] = $booth->bank_status;
+                }
+                $data['rows'][] = $tmp;
             }
             $data['total'] = $list->getTotal();
             $re = Tools::reTrue('获取店铺列表成功', $data, $list);
@@ -125,8 +134,8 @@ class OfficeBoothController extends \BaseController
                 $status = -1;
                 $msg = '您的店铺['.$booth->b_title.']已被禁用';
             }
-            $pushMessage = new PushMessage($booth->u_id);
-            $pushMessage->pushMessage($msg);
+            $obj = new MessageDispatcher($booth->u_id);
+            $obj->fireTextToUser($msg);
             $booth->b_status = $status;
             $booth->remark = $remark;
             $booth->save();

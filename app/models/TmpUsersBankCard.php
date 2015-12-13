@@ -11,7 +11,7 @@ class TmpUsersBankCard extends Eloquent
     private function baseValidate()
     {
         $validator = Validator::make(
-            ['user' => $this->u_id, 'bank' => $this->b_id, 'card_number' => $this->b_card_num],
+            ['user' => $this->u_id, 'bank' => $this->b_id, 'card_number' => $this->b_card_number],
             ['user' => 'required', 'bank' => 'required', 'card_number' => 'required']
         );
         if ($validator->fails()) {
@@ -25,7 +25,7 @@ class TmpUsersBankCard extends Eloquent
     public function showInList()
     {
         $data = [];
-        $data['card_number'] = $this->b_card_num;
+        $data['card_number'] = $this->b_card_number;
         $data['bank'] = $this->bank->b_name;
         return $data;
     }
@@ -35,7 +35,7 @@ class TmpUsersBankCard extends Eloquent
         $data = [];
         $this->load('bank');
         $data['id'] = $this->t_id;
-        $data['card_number'] = $this->b_card_num;
+        $data['card_number'] = $this->b_card_number;
         $data['bank'] = $this->bank->showInList();
         $data['holder_name'] = $this->b_holder_name;
         $data['holder_phone'] = $this->b_holder_phone;
@@ -93,8 +93,8 @@ class TmpUsersBankCard extends Eloquent
         } else {
             $content = '审核银行卡信息记录, '.$old_status;
         }
-        $pushMsgObj = new PushMessage($this->u_id);
-        $pushMsgObj->pushMessage($content);
+        $msg = new MessageDispatcher($this->u_id);
+        $msg->fireTextToUser($content);
         $this->addCensorLog($content);
         return $this->save();
     }

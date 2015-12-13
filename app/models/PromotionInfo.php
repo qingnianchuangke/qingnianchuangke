@@ -26,6 +26,7 @@ class PromotionInfo extends Eloquent
         $this->baseValidate();
         $now = new DateTime();
         $this->created_at = $now->format('Y-m-d H:i:s');
+        $this->updated_at = $now->format('Y-m-d H:i:s');
         $this->p_praise_count = 0;
         $this->p_reply_count = 0;
         $this->save();
@@ -71,6 +72,9 @@ class PromotionInfo extends Eloquent
         if (!empty($this->school)) {
             $data['school'] = $this->school->showInList();
         }
+        if ($this->city) {
+            $data['city']  = $this->city->showInList();
+        }
         $data['praises'] = null;
         if (!empty($this->praises)) {
             $tmp = null;
@@ -80,6 +84,7 @@ class PromotionInfo extends Eloquent
             $data['praises'] = $tmp;
         }
         $data['created_at'] = $this->created_at->format('Y-m-d H:i:s');
+        $data['prom_id'] = $this->p_id;
         return $data;
     }
 
@@ -97,9 +102,13 @@ class PromotionInfo extends Eloquent
 
     public function school()
     {
-        return $this->belongsTo('DicSchool', 's_id', 't_id');
+        return $this->hasOne('DicSchool', 't_id', 's_id');
     }
 
+    public function city()
+    {
+        return $this->hasOne('DicCity', 'c_id', 'c_id');
+    }
     public function praises()
     {
         return $this->hasMany('PromotionPraise', 'prom_id', 'p_id');

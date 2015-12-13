@@ -1,0 +1,429 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css">
+<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../js/common.js"></script>
+<script type="text/javascript" src="../js/jquery.jsonp.js"></script>
+<title>用户审核页面</title>
+<style type="text/css">
+table.altrowstable {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;
+	color:#333333;
+	border-width: 1px;
+	border-color: #a9c6c9;
+	border-collapse: collapse;
+}
+table.altrowstable td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+.rightTd{
+	width: 580px;
+	background-color:#d4e3e5;
+}
+.leftTd{
+	text-align: right;
+	width: 150px;
+	background-color:#c3dde0;
+}
+</style>
+<script>
+//页面加载
+$(document).ready(function () {
+	BindData();
+	$("#tt").datagrid('getPager').pagination({
+		onSelectPage:function(pageNum, pageSize){
+			BindData();
+		}
+	});
+});
+	//绑定数据
+	function BindData() {
+		var pageNumber = $("#tt").datagrid('getPager').data("pagination").options.pageNumber;
+		var pageSize = $("#tt").datagrid('getPager').data("pagination").options.pageSize;
+		$.ajax({
+			type: "get",
+			url: _url+'office/user/profile',
+			data: {page:pageNumber,per_page:pageSize},
+			dataType: "text",
+			success: function (r) {	
+				var result = JSON.parse(r);
+				if(result.result == "2000")
+                	$("#tt").datagrid("loadData", result.data);
+				else 
+					$.messager.alert("提示", result.info, "alert");
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+	}
+	//功能菜单按钮点击事件
+	function toolBarClick(ty) {
+		$("#displayinfo").attr("fnty", ty);
+		switch (ty) {
+			case "resh"://刷新
+				BindData();
+				break;
+			default:
+				break;
+		}
+	}
+	//绑定页面元素
+	function putDataToWindow(data) {
+		clearDetailWindowData();
+		putDetailToWindow(data.base);
+		clearBankWindowData();
+		putBankToWindow(data.bank);
+		// clearContactWindowData();
+		// putContactToWindow(data.contact);
+	}
+	function clearDetailWindowData(){
+		$("#sfzhm").text("");
+		$("#sfzzp_zm").attr("src","");
+		$("#sfzzp_bm").attr("src","");
+		$("#jtzz").text("");
+		$("#fqxm").text("");
+		$("#fqdh").text("");
+		$("#mqxm").text("");
+		$("#mqdh").text("");
+		$("#detailOptTd").html("");
+	}
+	function putDetailToWindow(detail){
+		if(detail!="[]"){
+			$("#sfzhm").text(detail.identity_number);
+			if(detail.identity_imgs!=null){
+				$("#sfzzp_zm").attr("src",detail.identity_imgs.identity_img_front);
+				$("#sfzzp_bm").attr("src",detail.identity_imgs.identity_img_back);
+			}
+			$("#jtzz").text(detail.home_adress);
+			$("#fqxm").text(detail.father_name);
+			$("#fqdh").text(detail.father_telephone);
+			$("#mqxm").text(detail.mother_name);
+			$("#mqdh").text(detail.mother_telephone);
+			var sdata = $("#tt").datagrid("getSelected");
+			if(sdata.u_status=="1"){
+				if(detail.status=="1")
+					$("#detailOptTd").html("此项已审核通过");
+				else if(detail.status=="0"){
+					$("#detailOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('detail','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('detail','0')\">[审核不通过]</a>");
+				}
+				else if(detail.status=="2"){
+					$("#detailOptTd").html("审核不通过，原因【<span style='color:red;'>"+detail.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('detail','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('detail','0')\">[审核不通过]</a>");
+				}
+			}
+			else{
+				$("#detailOptTd").html("此用户已被禁用");
+			}
+		}
+	}
+	function censor(type, opt, bankid){
+		var remark = "";
+		if(opt=="0")
+			remark = prompt("请输入审核不通过的原因：", ""); 
+        if(opt == "0" && remark==null){
+            return;
+        }
+        else if(opt == "0" && remark==""){
+            $.messager.alert("提示", "请输入审核不通过的原因!", "alert");
+            return;
+        }
+
+		var sdata = $("#tt").datagrid("getSelected");
+		if (sdata) {
+			var _id = sdata.id;
+			if(type=="bank")
+				_id = bankid;
+			$.ajax({
+				type: "put",
+				url: _url+'office/user/profile/'+_id+'/censor/'+type,
+				data: {check:opt,remark:remark},
+				dataType: "text",
+				success: function (r) {
+					var result = JSON.parse(r);
+					alert(result.info);
+					if(result.result =="2000"){
+						//审核成功
+						var tdid = type+"OptTd";
+						if(opt=="1")
+							$("#"+tdid).html("此项已审核通过");
+						else
+							$("#"+tdid).html("审核不通过，原因【<span style='color:red;'>"+remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('"+type+"','1','"+_id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('"+type+"','0','"+_id+"')\">[审核不通过]</a>");
+					}
+				},
+				error: function () {
+					alert("操作失败!");
+				}
+			});
+		} else {
+			$.messager.alert("提示", "获取选中的用户信息失败！", "alert");
+		}
+	}
+	function clearBankWindowData(){
+		$("#khh").text("");
+		$("#kh").text("");
+		$("#hzxm").text("");
+		$("#hzdh").text("");
+		$("#hzsfz").text("");
+		$("#bankOptTd").html("");
+	}
+	function putBankToWindow(bank){
+		$("#khh").text(bank.card_number);
+		if(bank.bank !=null)
+			$("#kh").text(bank.bank.name);
+		$("#hzxm").text(bank.holder_name);
+		$("#hzdh").text(bank.holder_phone);
+		$("#hzsfz").text(bank.holder_identity_number);
+		var sdata = $("#tt").datagrid("getSelected");
+		if(sdata.u_status=="1"){
+			if(bank.status=="1")
+				$("#bankOptTd").html("此项已审核通过");
+			else if(bank.status=="0"){
+				$("#bankOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('bank','1','"+bank.id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('bank','0','"+bank.id+"')\">[审核不通过]</a>");
+			}
+			else if(bank.status=="2"){
+				$("#bankOptTd").html("审核不通过，原因【<span style='color:red;'>"+bank.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('bank','1','"+bank.id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('bank','0','"+bank.id+"')\">[审核不通过]</a>");
+			}
+		}
+		else{
+			$("#bankOptTd").html("此用户已被禁用");
+		}
+	}
+	function clearContactWindowData(){
+		$("#xxmc").text("");
+		$("#xh").text("");
+		$("#xszzp").attr("src","");
+		$("#zy").text("");
+		$("#xl").text("");
+		$("#rxnf").text("");
+		$("#fdyxm").text("");
+		$("#fdydh").text("");
+		$("#hyxm1").text("");
+		$("#hydh1").text("");
+		$("#hyxm2").text("");
+		$("#hydh2").text("");
+		$("#contactOptTd").html("");
+	}
+	function putContactToWindow(contact){
+		if(contact.school!=null)
+			$("#xxmc").text(contact.school.school_name);
+		$("#xh").text(contact.student_number);
+		if(contact.student_img!=null)
+			$("#xszzp").attr("src",contact.student_img.student_img_front);
+		$("#zy").text(contact.profession);
+		$("#xl").text(contact.degree);
+		$("#rxnf").text(contact.entry_year);
+		$("#fdyxm").text(contact.teacher_name);
+		$("#fdydh").text(contact.teacher_phone);
+		$("#hyxm1").text(contact.frend_name1);
+		$("#hydh1").text(contact.frend_telephone1);
+		$("#hyxm2").text(contact.frend_name2);
+		$("#hydh2").text(contact.frend_telephone2);
+		var sdata = $("#tt").datagrid("getSelected");
+		if(sdata.u_status=="1"){
+			if(contact.status=="1")
+				$("#contactOptTd").html("此项已审核通过");
+			else if(contact.status=="0"){
+				$("#contactOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('contact','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('contact','0')\">[审核不通过]</a>");
+			}
+			else if(contact.status=="2"){
+				$("#contactOptTd").html("审核不通过，原因【<span style='color:red;'>"+contact.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('contact','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('contact','0')\">[审核不通过]</a>");
+			}
+		}
+		else{
+			$("#contactOptTd").html("此用户已被禁用");
+		}
+	}
+	function formatStatus(value, row){
+		if(row.u_status=="1")
+		{
+			if(row.base_status==null || row.base_status=="0")
+				return "未审核";
+			else if(row.base_status=="1")
+				return "已通过审核";
+			else
+				return "未通过审核";
+		}else{
+			return "已禁用";
+		}
+	}
+	function formatOpt(value, row,index){
+		var result = "";
+		if(row.u_status=="1")
+			result = '<a class="alink-edit" onclick="changeStatus(\'0\',\'禁用\',\''+row.id+'\')" href="#">[禁用]</a>';
+		else
+			result = '<a class="alink-edit" onclick="changeStatus(\'1\',\'启用\',\''+row.id+'\')" href="#">[启用]</a>';
+		return result + "&nbsp;&nbsp;<a class='alink-edit' style='color:blue' href='#' onclick='viewDetail("+row.id+","+index+")'>[查看明细]</a>";
+	}
+	function changeStatus(ty,msg,id){
+		$.messager.confirm("提示", "确认"+msg+"选中的用户！", function (r) {
+        if (r) {
+            var remark="";
+            remark = prompt("请输入"+msg+"选中用户的原因：", ""); 
+            if(ty=="0"&&remark==null){
+                return;
+            }
+            else if(ty=="0"&&remark==""){
+                $.messager.alert("提示", "请输入禁用选中用户的原因!", "alert");
+                return;
+            }
+            $.ajax({
+                type: "put",
+                url: _url+'office/user/'+id+"/enable",
+                data: {status:ty,remark:remark},
+                dataType: "text",
+                success: function (r) {
+                    var result = JSON.parse(r);
+                    alert(result.info);
+                    if(result.result=="2000"){
+                        BindData();
+                    }
+                },
+                error: function () {
+                    alert("操作失败!");
+                }
+            });
+        }
+    });
+	}
+	function viewDetail(id,index){
+	    $("#tt").datagrid("selectRow",index);
+		$.ajax({
+			type: "get",
+			url: _url+'office/user/profile/'+id,
+			data: {},
+			dataType: "text",
+			success: function (r) {
+				var result = JSON.parse(r);
+				if(result.result=="2000"){
+					putDataToWindow(result.data);
+					$('#userdetail-dlg').dialog('open');
+				}
+				else{
+					$.messager.alert("提示", result.info , "alert");
+				}
+			},
+			error: function () {
+				alert("加载失败!");
+			}
+		});
+	}
+</script>
+</head>
+
+<body>
+<table id="tt" title="用户列表" class="easyui-datagrid" data-options="
+            rownumbers:true,
+            fit:true,
+            singleSelect:true,
+            pagination:true,
+            pageSize:20,
+            idField:'id',
+            toolbar:'#menuTollbar'">
+    <thead>
+        <tr>
+            <th data-options="field:'id',width:120,align:'left',halign:'center',sortable:true">id</th>
+            <th data-options="field:'u_mobile',width:120,align:'left',halign:'center',sortable:true">手机号码</th>
+            <th data-options="field:'u_name',width:80,align:'left',halign:'center',sortable:true">姓名</th>
+            <th data-options="field:'t_name',width:200,align:'left',halign:'center',sortable:true">学校</th>
+            <th data-options="field:'status',width:80,align:'left',halign:'center',sortable:true,formatter:formatStatus">状态</th>
+            <th data-options="field:'u_remark',width:100,align:'left',halign:'center',sortable:true">禁用原因</th>
+            <th data-options="field:'options',width:160,align:'center',halign:'center',sortable:true,formatter:formatOpt">操作</th>
+        </tr>
+    </thead>
+</table>
+<div id="menuTollbar" style="height: auto;">
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="BindData();">刷新</a>
+</div>
+
+<div id="userdetail-dlg" class="easyui-dialog" title="用户明细" style="width: 800px; height: 430px; padding: 5px"
+    data-options="
+        closed: true,
+        modal: true,
+        iconCls: 'icon-search',
+        buttons: '#userdetail-dlg-buttons'
+    ">
+    <div class="easyui-tabs" style="width:776px;height:348px">
+        <div id="jbxxTab" title="基本信息" style="padding:10px">
+            <table class="altrowstable">
+				<tr>
+					<td class="leftTd">宿舍</td><td class="rightTd"><span id="apartment"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">身份证号码</td><td class="rightTd"><span id="sfzhm"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">身份证照片-正面</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="sfzzp_zm"/></td>
+				</tr>
+				<tr>
+					<td class="leftTd">身份证照片-背面</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="sfzzp_bm"/></td>
+				</tr>
+				<tr>
+					<td class="leftTd">入学年份</td><td class="rightTd"><span id="entry_year"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">专业</td><td class="rightTd"><span id="major"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">家庭住址</td><td class="rightTd"><span id="jtzz"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">紧急联系人</td><td class="rightTd"><span id="emergency_name"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">紧急联系人电话</td><td class="rightTd"><span id="emergency_phone"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">父亲姓名</td><td class="rightTd"><span id="fqxm"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">父亲电话</td><td class="rightTd"><span id="fqdh"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">母亲姓名</td><td class="rightTd"><span id="mqxm"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">母亲电话</td><td class="rightTd"><span id="mqdh"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="detailOptTd"></td>
+				</tr>
+			</table>
+        </div>
+        <div id="yhkTab" title="银行卡信息" style="padding:10px">
+			<table class="altrowstable">
+				<tr>
+					<td class="leftTd">开户行</td><td class="rightTd"><span id="khh"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">卡号</td><td class="rightTd"><span id="kh"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">户主姓名</td><td class="rightTd"><span id="hzxm"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">户主电话</td><td class="rightTd"><span id="hzdh"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">户主身份证</td><td class="rightTd"><span id="hzsfz"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="bankOptTd"></td>
+				</tr>
+			</table>
+        </div>
+    </div>
+</div>
+<div id="userdetail-dlg-buttons">
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-no'" onclick="$('#userdetail-dlg').dialog('close');BindData();">关闭</a>
+</div>
+
+</body>
+</html>

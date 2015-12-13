@@ -7,6 +7,17 @@ class Cart extends Eloquent
     public $primaryKey = 'c_id';
     public $timestamps = false;
 
+    public static $STATUS_DELETED = -1;
+    public static $STATUS_INVALID = 0;
+    public static $STATUS_PENDDING_CONFIRM = 1;
+    public static $STATUS_PENDDING_PAY = 2;
+    public static $STATUS_PAIED = 3;
+
+    public static $TYPE_REGULAR_PRODUCT = 1;
+    public static $TYPE_CROWD_FUNDING = 2;
+    public static $TYPE_FLEA_PRODUCT = 3;
+    public static $TYPE_AUCTION = 4;
+
     private $_quntityOri = 0;
 
     private function baseValidate()
@@ -96,7 +107,7 @@ class Cart extends Eloquent
         $inCart = Cart::where('c_status', '=', 1)->where('p_id', '=', $this->p_id)->sum('c_quantity');
         $remain = (int)$total - (int)$sold - (int)$inCart + $this->_quntityOri;
         if ($this->c_quantity > $remain) {
-            throw new Exception("产品库存不足", 7001);
+            throw new Exception("产品库存不足", 7006);
         }
         $product->quantity->q_cart = $inCart + $this->c_quantity - $this->_quntityOri;
         $product->quantity->save();
@@ -151,11 +162,61 @@ class Cart extends Eloquent
     {
         $now = new DateTime();
         $this->checkout_at = $now->format('Y-m-d H:i:s');
+        $this->checkoutCrowdFunding();
+        $this->checkoutAuction();
         $this->c_status = 3;
         if (!$this->save()) {
             throw new Exception("结算购物车失败", 9005);
         }
         return true;
+    }
+
+    public function checkoutCrowdFunding()
+    {
+        if ($this->c_type != 2) {
+            return true;
+        }
+
+        // push msg to seller
+        $booth = Booth::find($this->b_id);
+
+        $product = CrowdFundingProduct::find($this->p_id);
+        $product->confirmProduct($this->c_quantity);
+        $funding = CrowdFunding::find($product->cf_id);
+        $funding->c_amount += $this->c_amount;
+        $funding->save();
+
+        $msg = new MessageDispatcher($booth->u_id);
+        $msg->fireCateToUser('您的众筹'.$funding->c_title.'已有人认购', 1, $funding->cf_id);
+
+        return true;
+    }
+
+    public function checkoutAuction()
+    {
+        if ($this->c_type != 4) {
+            return true;
+        }
+        $auction = Auction::find($this->p_id);
+        $auction->a_status = 3;
+        $bid = AuctionBid::find($auction->a_win_id);
+        $bid->is_pay = 1;
+        $auction->save();
+        $bid->save();
+
+        return true;
+    }
+
+    public static function getCartTypeCount($type, $type_id)
+    {
+        if (!$type) {
+            throw new Exception("请传入有效的cart类型", 1);
+        }
+        $count = Cart::where('c_type', '=', $type)->where('p_id', '=', $type_id)->count();
+        if (!$count) {
+            $count = 0;
+        }
+        return $count;
     }
 
     public static function sumIncome($from = null, $to = null, $b_id = null, $u_id = null, $owner_id = null)
@@ -192,5 +253,10 @@ class Cart extends Eloquent
     public function booth()
     {
         return $this->hasOne('Booth', 'b_id', 'b_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo('Order', 'o_id', 'o_id');
     }
 }

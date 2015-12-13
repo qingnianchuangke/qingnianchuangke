@@ -32,6 +32,11 @@ class AliyunOss
         $this->_id = $id;
     }
 
+    public function setBucket($bucket)
+    {
+        $this->_bucket = $bucket;
+    }
+
     public function upload()
     {
         $folder = $this->_cate;
@@ -46,7 +51,8 @@ class AliyunOss
                 foreach ($_FILES as $key => $file) {
                     if ($file['name'] && $file['error'] == 0 && $file['size'] > 0) {
                         // todo enhance with mime type
-                        $obj = '_tmp/'.$this->_cate.'/'.$this->_token.'/'.$key.'.'.$this->getExt($file);
+                        $rnd = Tools::getTimeString(6);
+                        $obj = '_tmp/'.$this->_cate.'/'.$this->_token.'/'.$key.'.'.$rnd.'.'.$this->getExt($file);
                         $re = $this->_oss->upload_file_by_file($this->_bucket, $obj, $file['tmp_name']);
                         if (!$re->isOK()) {
                             throw new Exception("图片:".$file['name'].'上传失败', 20001);
@@ -89,6 +95,14 @@ class AliyunOss
     public function getList()
     {
         $dir = $this->_cate.'/'.$this->_id.'/';
+        $re = $this->scan($dir);
+        $imgs = Img::attachKey($re);
+        return $imgs;
+    }
+
+    public function getTmpList()
+    {
+        $dir = '_tmp/'.$this->_cate.'/'.$this->_token.'/';
         $re = $this->scan($dir);
         $imgs = Img::attachKey($re);
         return $imgs;
@@ -158,9 +172,40 @@ class AliyunOss
         return true;
     }
 
+    public function replace($name)
+    {
+        $tmp_imgs = $this->getTmpList();
+        $imgs = $this->getList();
+
+        // delete
+        if (array_key_exists($name, $imgs)) {
+            $this->remove($imgs[$name]);
+        }
+        // move
+        if (array_key_exists($name, $tmp_imgs)) {
+            $obj = Img::getFileName($tmp_imgs[$name]);
+            $dir = $this->_cate.'/'.$this->_id.'/';
+            $obj = $dir.$obj;
+            $this->move($tmp_imgs[$name], $obj);
+        } else {
+            throw new Exception("没有找到目标文件", 20001);
+        }
+        return $obj;
+    }
+
     public function getResponseBodyArray($response)
     {
         return $re = XML2Array::createArray($response->body);
+    }
+
+    public function exsits($obj)
+    {
+        $re = $this->_oss->is_object_exist($this->_bucket, $obj);
+        if (!$re->isOK()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     public function getExt($file)

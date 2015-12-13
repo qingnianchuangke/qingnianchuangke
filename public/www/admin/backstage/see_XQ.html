@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="../../js/common.js"></script>
+</head>
+<style type="text/css">
+    body{
+        background-color: #E7E8EC;
+        margin:0; padding:0;
+        font-family: "Microsoft yahei";
+    }
+    progress::-moz-progress-bar { background: #76C5EE; }
+    progress::-webkit-progress-bar { background: #76C5EE; }
+    progress::-webkit-progress-value  { background: #76C5EE; }
+</style>
+<script src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+    var token;
+    var uid;
+    $(document).ready(function (){
+        token = getCookie("token");
+        uid = getCookie("uid");
+        BindUserInfo();
+        imgWidth();
+        $(window).resize(function () {
+            imgWidth();
+        });
+    });
+    function imgWidth(){
+        var middleWidth = $(".subject").width();
+        var  middle_rightWidth = $(".middle_right").width();
+        $(".ceshi").width(middleWidth-middle_rightWidth-20);
+        var imgWidth = $(".ceshi").width();
+        $(".ceshi").height(imgWidth*5/8);
+
+
+        var  MXWidth = $(".project_XQ").width();//明细里的图片大小
+        $(".MX_img").width(MXWidth-68-45);
+        var MX =($(".MX_img").width(MXWidth-68-45)*5/8);
+         $(".MX_img").height(MX);
+
+
+
+        var projectWidth = $(".project_Fenlei").width();  //banner
+        $(".banner").width(middleWidth-projectWidth-24);
+        var bannerWidth =  $(".banner").width();
+        $(".banner").height(bannerWidth*5/8);
+    }
+    function BindUserInfo(){
+        $.ajax({
+            type: "get",
+            url: _url + "wechat/user/me/profile/base",
+            data: {token:token,u_id:uid},
+            dataType: "json",
+            success: function (r) {
+                if (r.result == "2000") {
+                    var data = r.data;
+                    if(data.stu_verified=="1" && data.id_verified=="1"){
+                        $("#rzremark").text("已认证");
+                    }
+                    if(data.is_club_verified=="1"){
+                        $("#rzremark").css("background-color","#77C4EC");
+                        $("#rzremark").text("社团认证");
+                    }
+                    $("#usernickname").text(data.nickname);
+                    $("#headimg").attr("src",data.head_img);
+                }else{
+                    alert("Get userinfo Faid:"+r.info);
+                }
+            },
+            error: function () {
+                alert("Communication error!");
+            }
+        });
+    }
+
+    function realize_XQ(obj){
+        $(obj).css("color","#000000");
+        $(obj).css("background-color","#76C5F0");
+        if($(obj).attr("name")=="realize") {
+            var value = $(obj).attr("value");
+            if (value == "1") {
+                $(".project_XQ").show();
+                $(obj).css("color","#000000");
+            }else{
+                $(".project_XQ").hide();
+                $(obj).siblings().css("color","#ffffff");
+            }
+            if (value == "2") {
+                $(".user_pl").show();
+                $(obj).css("color","#000000");
+            }else{
+                $(".user_pl").hide();
+                $(obj).siblings().css("color","#ffffff");
+            }
+            if (value == "3") {
+                $(obj).css("color","#000000");
+                $(".sub_user").show();
+                $(".audit_content_pass").hide();
+            }else{
+                $(".sub_user").hide();
+                $(obj).siblings().css("color","#ffffff");
+            }
+        }
+    }
+
+
+</script>
+<body>
+<div style="width:100%;height:100px;background-color:#F3F7F8;border-top:10px solid #76C5EE;border-bottom:2px solid #C8CBD0">
+    <table style="width:100%;height:100%;vertical-align:middle;">
+        <tr>
+            <td style="width:51%;float:right;padding-top:15px;">
+                <img style="width:105px;height:54px;" src="../images/manageLogo.png" alt=""/>
+            </td>
+            <td style="width:33.3%">&nbsp;</td>
+            <td style="width:26%">
+                <div style="float:left;">
+                    <img id="headimg" src="../images/head_portrait.jpg" style="width:60px;border-radius:38px;" alt=""/>
+                </div>
+                <div style="padding-left:80px;padding-top:20px;">
+                    <span id="usernickname"></span>
+                    <span id="rzremark" style="border-radius:25px;text-align:center;background-color:#76C5EE;color:#ffffff;padding:0px 10px;"></span>
+                </div>
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="XQ_subject" style="width: 65%;margin: 20px auto 0;background-color: rgb(255, 255, 255);">
+    <div class="subject" style="width:84%;; margin:0 auto;padding-bottom: 50px;">
+    <div class="ZC_XQ_middle">
+        <div class="XQ_middle" style="float: left;border: 1px solid #DDDDDD;margin-bottom: 2px;width: 100%;display:flex;">
+            <div style="float:left;flex: 1"><img class="ceshi" src="../images/ceshi.jpg" onclick="viewDetail('@id')" style="width:400px;height:250px" /></div>
+            <div style="float: left;width: 52%;margin: 0 20px 10px 0;flex: 1.54" class="middle_right">
+                <div style="padding: 7px 0px 0 20px;float: left;width:100%">
+                    <p style="margin-top:0;font-size: 26px;color: #000000;font-weight: bold;width:100%">支持金额：<b>20元</b></p>
+                    <p style="color: #000000;font-weight: bold;width: 85%;display:flex;">
+                        <span style="float:left;flex: 1;padding-bottom: 22px; border-bottom: 1px solid #B3B3B3;border-right: 1px solid #B3B3B3;padding-right: 4px;">众筹目标：<b>2000元</b></span>
+                        <span style="flex: 1;padding-bottom: 22px;border-bottom: 1px solid #B3B3B3;padding-left: 23px;border-right: 1px solid #B3B3B3;">众筹份数：<b>100份</b></span>
+                        <span style="flex: 1;padding-bottom: 22px;border-bottom: 1px solid #B3B3B3;padding-left: 24px;">剩余天数：<b>20天</b></span>
+                    </p>
+                    <p style="color: #000000;font-weight: bold;margin: 10px 0 26px 0;display: flex;font-size: 26px;"><span style="flex:1;">已筹:<b>1000元</b></span></p>
+                    <p style="color: #000000;font-weight: bold;">完成度：<b>50%</b></p>
+                    <p style="display: flex"><progress style="width:60%;height: 1.6em;" id="prog" value="500" max="1000"></progress></p>
+                </div>
+            </div>
+        </div>
+        <div style="clear:both;"></div>
+        <div class="XQ_middle_content" style="margin-bottom: 2px;padding: 5px;">
+            <div style="font-weight:bold;font-size:1.9em;margin: 10px 0 10px 5px;color: #000000;">为流浪猫找归宿</div>
+            <div style="border-bottom:1px solid #DDDDDD;padding-bottom:7px;text-indent: 2rem;line-height: 26px;">我是四川师范大学（成都校区）的一名学生，我叫洋子，11月25日在师大花园附近吃饭的时候，发现了一只被遗弃的猫咪（我给它起了一名字叫小花，好像有点俗气），当时就想着已经是冬天了，所以没有过多考虑就把小花偷偷带回了宿舍，可带回来3天了，每天去上课，都会担心被宿管阿姨发现，又担心它抓坏舍友的东西，我也没有更多的钱养它，尽管我很舍不得，但是我现在确实没有能力去照顾它了。今天问了一下小动物爱心站，看他们能不能收留它，可没想到送小花去爱心站，爱心站还要收500元钱，说是收养费，虽然觉得很不合理，但是我确实没法再继续养小花了。我现在的生活费也有限，也不能随便就拿出500元，所以希望大家能够帮忙，帮我筹齐这500元，然后让小花能够健康的成长，我代小花感谢大家了
+            </div>
+        </div>
+    </div>
+        <div class="project_Fenlei" style="padding:10px;float:left;width:58%;">
+            <table>
+                <tr>
+                    <td style="padding-left:10px;margin: 0 20px 0 30px;float: left;">
+                        <span class="span_Fenlei1" name="realize" value="1" onclick="realize_XQ(this)"style="color:#000000;float:left;margin:10px 20px 10px 20px;padding:2px 25px;border-radius:5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">查看明细</span>
+                        <span class="span_Fenlei2" name="realize" value="2" onclick="realize_XQ(this)"style="color:#ffffff;margin:10px 20px 10px 20px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">查看评论(<b>20</b>)</span>
+                        <span class="span_Fenlei3" name="realize" value="3" onclick="realize_XQ(this)"style="color:#ffffff;margin:10px 20px 10px 20px;padding:2px 25px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">支持明细</span>
+                    </td>
+
+                </tr>
+            </table>
+        </div>
+        <div style="float:right;">
+            <img class="banner" src="../images/banner.jpg" style="width:400px;height:250px;margin-top:12px;float:right;" alt=""/>
+        </div>
+        <div class="project_XQ" style="border: 1px solid #DDDDDD; width:57%;"><!--项目详情-->
+            <div>
+                <img class="MX_img" style="width: 400px;height:auto;margin: 10px 50px 50px 83px;" src="../images/ceshi.jpg" alt=""/>
+            </div>
+            <p class="project_2" style="padding:10px;color:#A8A8A8;">发的发大师傅啥方式的发的发阿斯蒂芬士大夫阿斯蒂芬师大师大发第三方打算</p>
+        </div>
+        <div class="user_pl" style="border:1px solid #BBB8B8;padding:10px 10px 60px 10px; width: 56%;display:none;"><!--评论-->
+            <table style="width:100%">
+                <tr>
+                    <td style="padding-left:10px;display: flex;border-bottom: 1px solid#DDDDDD;">
+                        <img id="headimg" style="width:60px;height:60px;border-radius:38px;float:left;flex: 1" src="../images/right_.jpg" alt=""/>
+                        <span style="float: left;margin: 20px 0 20px 0;text-align: center;flex: 3" id="usernickname">陈桃陈桃</span>
+                        <span style="float: right;margin: 20px 0 20px 0;width: 68%;line-height: 24px;flex: 7" id="comment">陈桃陈桃的评论陈桃陈桃的评论陈桃陈桃的评论</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-left:10px;display: flex;border-bottom: 1px solid#DDDDDD">
+                        <img id="headimg" style="width:60px;height:60px;border-radius:38px;float:left;flex: 1" src="../images/right_.jpg" alt=""/>
+                        <span style="float: left;margin: 20px 0 20px 0;text-align: center;flex: 3" id="usernickname">陈桃陈桃</span>
+                        <span style="float: right;margin: 20px 0 20px 0;width: 68%;line-height: 24px;flex: 7" id="comment">陈桃陈桃的评论陈桃陈桃的评论陈桃陈桃的评论</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-left:10px;display: flex;border-bottom: 1px solid#DDDDDD">
+                        <img id="headimg" style="width:60px;height:60px;border-radius:38px;float:left;flex: 1" src="../images/right_.jpg" alt=""/>
+                        <span style="float: left;margin: 20px 0 20px 0;text-align: center;flex: 3" id="usernickname">陈桃陈桃</span>
+                        <span style="float: right;margin: 20px 0 20px 0;width: 68%;line-height: 24px;flex: 7" id="comment">陈桃陈桃的评论陈桃陈桃的评论陈桃陈桃的评论</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-left:10px;display: flex;border-bottom: 1px solid#DDDDDD">
+                        <img id="headimg" style="width:60px;height:60px;border-radius:38px;float:left;flex: 1" src="../images/right_.jpg" alt=""/>
+                        <span style="float: left;margin: 20px 0 20px 0;text-align: center;flex: 3" id="usernickname">陈桃陈桃</span>
+                        <span style="float: right;margin: 20px 0 20px 0;width: 68%;line-height: 24px;flex: 7" id="comment">陈桃陈桃的评论陈桃陈桃的评论陈桃陈桃的评论</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-left:10px;display: flex;border-bottom: 1px solid#DDDDDD">
+                        <img id="headimg" style="width:60px;height:60px;border-radius:38px;float:left;flex: 1" src="../images/right_.jpg" alt=""/>
+                        <span style="float: left;margin: 20px 0 20px 0;text-align: center;flex: 3" id="usernickname">陈桃陈桃</span>
+                        <span style="float: right;margin: 20px 0 20px 0;width: 68%;line-height: 24px;flex: 7" id="comment">陈桃陈桃的评论陈桃陈桃的评论陈桃陈桃的评论</span>
+                    </td>
+                </tr>
+
+            </table>
+        </div>
+
+
+    <div class="sub_user" style="border:1px solid #BBB8B8;padding:10px 10px 60px 10px;display:none;width:56%;">
+        <table style="width:100%">
+            <tr style="width: 100%;display:flex;border-bottom:1px solid rgb(187, 184, 184);">
+                <th style="flex:1;float: left;">用户头像</th>
+                <th style="flex:1;float: left;">用户昵称</th>
+                <th style="flex:1;float: left;">支持金额</th>
+                <th style="flex:1;float: left;">支持时间</th>
+            </tr>
+                <tr style="float:left;display:flex;width:100%;border-bottom: 1px solid#DDDDDD;">
+                    <td style="flex:1;float: left;text-align: center"><img src="../images/audit_time.jpg" style="width:60px;height:60px;border-radius:38px;float:left;margin:3% 0 0 26%;" alt=""/></td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">陈桃陈桃</td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">$12313</td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">2015121</td>
+                </tr>
+                <tr style="float:left;display:flex;width:100%;border-bottom: 1px solid#DDDDDD;">
+                        <td style="flex:1;float: left;text-align: center"><img src="../images/audit_time.jpg" style="width:60px;height:60px;border-radius:38px;float:left;margin:3% 0 0 26%;" alt=""/></td>
+                        <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">陈桃陈桃</td>
+                        <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">$12313</td>
+                        <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">2015121</td>
+                 </tr>
+                 <tr style="float:left;display:flex;width:100%;border-bottom: 1px solid#DDDDDD;">
+                    <td style="flex:1;float: left;text-align: center"><img src="../images/audit_time.jpg" style="width:60px;height:60px;border-radius:38px;float:left;margin:3% 0 0 26%;" alt=""/></td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">陈桃陈桃</td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">$12313</td>
+                    <td style="flex:1;float: left;text-align: center;margin: 20px 0 20px 0;">2015121</td>
+                 </tr>
+            </table>
+        </div>
+</div>
+    <div style="clear:both;"></div>
+</div>
+</body>
+</html>

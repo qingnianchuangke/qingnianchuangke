@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>产品详情</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/common.js"></script>
+    <style type="text/css">
+        body {
+            background-color: #EFF0F4;
+            color: #959796;
+            max-width:555px;
+            margin-left:auto;
+            margin-right:auto;
+        }
+    </style>
+    <script>
+	    var starttime;
+	    var endtime;
+	    var zstime;
+	    var current_time_cz;
+	    var type="";//0：未开始 1：进行中 2：结束展示中
+
+        $(document).ready(function () {
+        	var id=GetQueryString("id");
+        	BindData(id);
+        });
+        function BindData(id) {
+            $.ajax({
+                type: "get",
+        		url: _url + "wechat/auction/"+id,
+                data: {},
+                dataType: "json",
+                success: function (r) {
+                    if (r.result == "2000") {
+                    	if(r.data){
+	                    	$("#zst").attr("src",r.data.detail_header_img[0]);
+	                    	$("#mxt").attr("src",r.data.detail_content_img[0]);
+			                $("#title").text(r.data.title);
+			                var current_time = r.data.current_time;
+			                current_time_cz = new Date(current_time.replace(/-/g,'/'))-new Date();
+			                var start_at = r.data.start_at;
+			                var end_at = r.data.end_at;
+			                starttime = start_at.replace(/-/g,'/');
+			                endtime = end_at.replace(/-/g,'/');
+			                zstime = new Date(end_at.replace("-","/"));
+	    					zstime.setMinutes(zstime.getMinutes() + 11, zstime.getSeconds(), 0);
+			                if(current_time<start_at){
+			                	$("#rtitle").text("距开始时间");
+			                	type = "0";
+		                	}
+			                else if(current_time<end_at){
+			                	$("#rtitle").text("距结束时间");
+			                	type = "1";
+		                	}
+			                else if(current_time>end_at){
+			                	$("#rtitle").text("此竞拍已结束");
+			                	type = "2";
+		                	}
+		                	show_date_time();
+	                	}
+                    }
+                },
+                error: function () {
+                    alert("加载失败!");
+                }
+            });
+        }
+        function show_date_time(){ 
+        	if(type=="" || type=="2"){$("#timestr").hide();return;}
+			window.setTimeout("show_date_time()", 80); 
+			var jsendtime;//设置倒计时结束时间
+			switch(type){
+				case "0":
+					jsendtime=new Date(starttime);
+					break;
+				case "1":
+					jsendtime=new Date(endtime);
+					break;
+				case "2":
+					jsendtime=new Date(zstime);
+					break;
+			}
+			var nowtime = new Date(new Date().getTime()+current_time_cz); 
+			var timeold=(jsendtime.getTime()-nowtime.getTime());
+			if(timeold<=0){
+				if(type=="0") {$("#rtitle").text("距结束时间");type="1";}
+				else if(type=="1") {$("#rtitle").text("此竞拍已结束");type="2";}
+				else if(type=="2") {$("#rtitle").text("此竞拍已结束");type="0";}
+			}else{
+				var sectimeold=timeold/1000;
+				var secondsold=Math.floor(sectimeold);
+				var msPerDay=24*60*60*1000;
+				var e_daysold=timeold/msPerDay;
+				var daysold=Math.floor(e_daysold);
+				var e_hrsold=(e_daysold-daysold)*24;
+				var hrsold=Math.floor(e_hrsold);
+				var e_minsold=(e_hrsold-hrsold)*60;
+				var minsold=Math.floor((e_hrsold-hrsold)*60);
+				var e_seconds = (e_minsold-minsold)*60;
+				var seconds=Math.floor((e_minsold-minsold)*60);
+				var ms = e_seconds-seconds;
+				ms = new String(ms);
+				ms = ms.substr(2,2);
+				hrsold = hrsold+daysold*24;
+				$("#timestr").html((hrsold<10?'0'+hrsold:hrsold)+"时"+(minsold<10?'0'+minsold:minsold)+"分"+(seconds<10?'0'+seconds:seconds)+"秒"+ms);
+			}
+		} 
+    </script>
+</head>
+<body>
+    <div id="remark" style="margin-top:-8px;margin-left:-8px;margin-right:-8px;background-color:white;text-align:center;">
+        <img id="zst" src="" style="width:100%;"/>
+    	<div id="rtitle" style="margin-top:-3px;padding-top:15px;padding-bottom:8px;font-size:16px;border-top:1px solid #DCDCDD;">距开始还剩</div>
+    	<div id="timestr" style="padding-bottom:16px;font-size:24px;border-bottom:1px solid #DCDCDD;color:#7DB8DD"></div>
+    	<div style="padding:15px 10px;font-size:16px;word-break:break-all;" id="title"></div>
+    	<img id="mxt" src="" style="width:100%;"/>
+    </div>
+</body>
+</html>

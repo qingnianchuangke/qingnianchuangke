@@ -1,6 +1,7 @@
 <?php
 
 use \Illuminate\Support\Collection;
+use \Illuminate\Filesystem\Filesystem;
 
 class HomeController extends BaseController {
     
@@ -15,8 +16,9 @@ class HomeController extends BaseController {
 
     public function banner1()
     {
-        $download_link = 'http://'.Config::get('app.subdomain.api').'/app/download';
-        return View::make('blade.index.banner1')->with('link', $download_link);
+        $type = Input::get('share_type', '');
+        $download_link = 'http://www.54qnck.com/qnck/download.html';
+        return View::make('blade.index.banner1')->with('link', $download_link)->with('share_type', $type);
     }
 
     public function banner2()
@@ -27,5 +29,9 @@ class HomeController extends BaseController {
     public function about()
     {
         echo "ABOUT US";
+    }
+
+    public function test()
+    {
     }
 }

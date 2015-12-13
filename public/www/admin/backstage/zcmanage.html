@@ -1,0 +1,571 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" href="../css/jquery-ui.css" media="screen">
+<script src="../js/jquery.min.js"></script>
+<script src="../../js/common.js"></script>
+<script src="../../js/jquery.form.js"></script>
+<script src="../js/jquery-ui-1.10.4.custom.min.js"></script>
+<script src="../js/jquery-ui-timepicker-addon.js"></script>
+<script src="../js/jquery-ui-timepicker-zh-CN.js"></script>
+<script src="../js/jquery.ui.datepicker-zh-CN.js"></script>
+<style type="text/css">
+body{
+    background-color:#fff;
+    margin:0; padding:0;
+    font-family: "Microsoft yahei";
+}
+a,a:hover{ text-decoration:none; color:#333}
+#menuDiv div{
+    cursor: pointer;
+}
+.choosed{
+    border-bottom: 2px solid #76C5EE;
+}
+.title{
+    text-align: center;
+    width: 100px;
+    color:#76C5EE;
+    border-right:1px solid #BBB8B8;
+    padding-right: 10px;
+}
+    .zc_cost{display:none;}
+    #prog{
+        margin-left: 5%;
+    }
+progress::-moz-progress-bar { background: #76C5EE; }
+progress::-webkit-progress-bar { background: #76C5EE; }
+progress::-webkit-progress-value  { background: #76C5EE; }
+</style>
+<script>
+var token;
+var uid;
+var currentEventObj;
+$(document).ready(function () {
+    token = getCookie("token");
+    uid = getCookie("uid");
+    $("#menuDiv").children().click(menuClick);
+    $("#menuDiv").children().eq(3).click();
+    $("#active_at").datetimepicker();
+    $(window).resize(function () {
+        imgW();
+    });
+});
+function imgW(){
+//    审核中的众筹
+    var middleWidth = $(".ZC_content").width();
+    var middle_rightWidth = $(".Intro").width();
+    $(".SH_Img").width(middleWidth-middle_rightWidth-20);
+    var imgWidth = $(".SH_Img").width();
+    $(".SH_Img").height(imgWidth*5/8);
+
+//    审核失败的众筹
+    var notGoImgWidth = $(".notGo_content").width();
+    var notGorightWidth = $(".notGo_Intro").width();
+    $(".notGo_Img").width(notGoImgWidth-notGorightWidth-20);
+    var notGoW = $(".notGo_Img").width();
+    $(".notGo_Img").height(notGoW*5/8);
+}
+function menuClick(){
+    currentEventObj = this;
+    $(this).siblings().removeClass("choosed");
+    $(this).addClass("choosed");
+    $("#addZcDiv").hide();
+    $("#showZcDiv").hide();
+    var type = $(this).attr('type');
+    if(type=="addZc"){
+        clearAllInputValue();
+        $("#addZcDiv").show();
+    }else{
+        $("#showZcDiv").html("");
+        $.ajax({
+            type: "get",
+            url: _url + "wechat/user/me/crowd",
+            data: {filter_option:type,token:token,u_id:uid},
+            dataType: "json",
+            success: function (r) {
+                if (r.result == "2000") {
+                    if(r.data.length>0){
+                        var i=1;
+                        $(r.data).each(function (){
+                            var temp = $("#zcinfodom").html();
+                            temp = temp.replace(/@id/g,this.id);
+                            if(this.cover_img.length>0)
+                                temp = temp.replace("@zst",this.cover_img[0]);
+                            temp = temp.replace("@title",this.title);
+                            temp = temp.replace("@brief",this.brief);
+                            temp = temp.replace("@price",this.price);
+                            temp = temp.replace("@yc",this.amount);
+                            temp = temp.replace("@wcd",this.percentage);
+                            temp = temp.replace("@percentage",this.percentage);
+                            temp = temp.replace("@left_time",this.time_left);
+                            temp = temp.replace("@sold_quantity",this.sold_quantity);
+                            temp = temp.replace("@target_quantity",this.target_quantity);
+                            if(this.remark)
+                                temp = temp.replace("@remark",this.remark);
+                            $("#showZcDiv").append(temp);
+                            if(i==1){
+                                $("#showZcDiv_middle").children().eq(0).css("border","0px");
+                            }
+                            i++;
+                        });
+                        $("#showZcDiv").show();
+                        if(type=="2")
+                            $("span[name='nopass']").show();
+                    }
+                }
+            },
+            error: function () {
+                alert("加载失败!");
+            }
+        });
+    }
+}
+function deleteZc(id){
+    if(confirm("确定要删除数据吗？")){
+        $.ajax({
+            type: "delete",
+            url: _url+'wechat/user/me/crowd/'+id,
+            data: {u_id:uid,token:token},
+            dataType: "json",
+            success: function (result) {
+                alert(result.info);
+                if(result.result=="2000"){
+                    $(currentEventObj).click();
+                }
+            },
+            error: function () {
+                $.messager.alert('提示', "调用删除众筹接口失败！", 'info');
+            }
+        });
+    }
+}
+var contentindex = 1;
+function createContentDiv(){
+    $("#contentDiv").append('<div class="ADDIMG"><div style="margin-top: 1px;display: flex;"><span class="more_addimg" style="width: 47px;flex: 0.59;height: 47px;border: 1px solid #BBB8B8;margin: 18px 11px 0px 1px;text-align: center;padding: 5px;float: left;cursor:pointer;"  onclick="javascript:choosePic('+contentindex+');">图文编辑</span><img style="margin: 0 2px 0 2px;flex: 2;" class="crowd_img_'+contentindex+'" ondblclick="deleteDom(this)" src="" width="160" height="94" /><textarea style="resize: none;flex: 6.92;padding: 10px;height: 72px;"id="crowd_txt_'+contentindex+'" rows="6" cols="20" placeholder="请选择图片并输入图片对应文字内容"></textarea></div><div><input style="display:none;" type="file" id="crowd_img_'+contentindex+'"" name="crowd_img_'+contentindex+'" draggable="true" single/></div></div>');
+    contentindex++;
+}
+function choosePic(i){
+    $("#crowd_img_"+i).click();
+    $("#crowd_img_"+i).change(function (e) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $(".crowd_img_"+i).attr({'src': e.target.result});
+        };
+        reader.readAsDataURL(file);
+        var len = $("#contentDiv").children().length;
+        if(i==contentindex-1 && len<6)
+            createContentDiv();
+    });
+}
+function cateClick(obj){
+    $(obj).siblings().css("background-color","#fff").attr("ck","0");
+    $(obj).css("background-color","#76C5F0").attr("ck","1");
+    if($(obj).attr("name")=="shipping"){
+        var value = $(obj).attr("value");
+        if(value=="0"){
+            $("#shipping_fee").val("0");
+            $("#shipping_fee").attr("readonly","readonly");
+        }
+        else{
+            $("#shipping_fee").val("");
+            $("#shipping_fee").focus();
+            $("#shipping_fee").removeAttr("readonly");
+        }
+    }
+    if($(obj).attr("name")=="zc_p"){
+        var value = $(obj).attr("value");
+        if(value=="0"){
+            $('.PS_1,.PS_2').show();
+            $('.PS,.PS1,.PS3,.ZC_M').hide();
+        }
+        if(value=="1"){
+            $('.zc_cost,.ZC_M').show();
+            $('.PS,.PS1,.PS2,.PS3').show();
+            $('.PS_1,.PS_2').hide();
+            $('.zc_cost').css('display','inline-block');
+        }else{
+            $('.zc_cost,.PS2').hide();
+        }
+    }
+}
+function clearAllInputValue(){
+    $("#title").val("");//众筹名称
+    $("#logoPic").attr("src","");//展示图片
+    $("#fileDiv").html('<input type="file"  id="imgUpload" name="cover_img" draggable="true" single/>');
+    $('#imgUpload').click(function(){
+        $("#imgUpload").change(function (e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#logoPic").attr({'src': e.target.result});
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+    $("#contentDiv").html("");
+    createContentDiv();
+    $("#price").val("");//众筹金额
+    $("#quantity").val("");//众筹份数
+    $("#amount").val("0");//众筹总额
+    $("#time").val("");//众筹天数
+    $("#people").val("");//众筹人数
+    $("#yield_time").val("");//回报天数
+    $("span[name='cate']").css("background-color","#fff").attr("ck","0");//众筹类型
+    $("span[name='cate']").eq(0).css("background-color","#76C5F0").attr("ck","1");//众筹类型
+    $("span[name='shipping']").css("background-color","#fff").attr("ck","0");//是否配送
+    $("span[name='shipping']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否配送
+    $("span[name='local_only']").css("background-color","#fff").attr("ck","0");//是否本校
+    $("span[name='local_only']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否本校
+    $("span[name='gkxx']").css("background-color","#fff").attr("ck","0");//是否公开信息
+    $("span[name='gkxx']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否公开信息
+    $("#shipping_fee").val("0");//配送费用
+    $("#brief").val("");//众筹介绍
+    $("#yield_desc").val("");//回报内容
+    $("span[name='is_limit']").css("background-color","#fff").attr("ck","0");//是否限购
+    $("span[name='is_limit']").eq(0).css("background-color","#76C5F0").attr("ck","1");//是否限购
+    $("#mobile").val("");//电话
+    $("#apartment").val("");//宿舍地址
+}
+function saveZcData(){
+    var title=$("#title").val();//众筹名称
+    var amount=$("#amount").val();//众筹总额
+    var cate="";//众筹类型
+    $("span[name='cate']").each(function (){
+        if($(this).attr("ck")=="1")
+            cate = $(this).attr("value");
+    });
+    var time=$("#time").val();//众筹天数
+    var people = $("#people").val();//众筹人数
+    var yield_time=$("#yield_time").val();//回报时间
+    var shipping = "0";//是否配送 0-否 1-是
+    $("span[name='shipping']").each(function (){
+        if($(this).attr("ck")=="1")
+            shipping = $(this).attr("value");
+    });
+    var shipping_fee=$("#shipping_fee").val();//运费
+    var brief=$("#brief").val();//众筹介绍
+    var yield_desc=$("#yield_desc").val();//回报内容
+    var open_file="0";//是否公开资料 0-否 1-是
+    $("span[name='gkxx']").each(function (){
+        if($(this).attr("ck")=="1")
+            open_file = $(this).attr("value");
+    });
+    var mobile=$("#mobile").val();//电话
+
+    var apartment=$("#apartment").val();//宿舍地址
+    var price=$("#price").val();//众筹金额
+    var quantity=$("#quantity").val();//众筹份数
+    var is_limit="0";//是否限购 0-否 1-是
+    $("span[name='is_limit']").each(function (){
+        if($(this).attr("ck")=="1")
+            is_limit = $(this).attr("value");
+    });
+    var active_at=$('#active_at').val();//众筹开始时间
+    var local_only="0";//是否限制本校
+    $("span[name='local_only']").each(function (){
+        if($(this).attr("ck")=="1")
+            local_only = $(this).attr("value");
+    });
+    var imgpath = $("#imgUpload").val();
+    if(imgpath==""){
+        $.messager.alert("提示", "请上传首页展示图", "alert");
+        return;
+    }
+    var extStart=imgpath.lastIndexOf(".");
+    var ext=imgpath.substring(extStart,imgpath.length).toUpperCase();
+    if(ext!=".BMP"&&ext!=".PNG"&&ext!=".GIF"&&ext!=".JPG"&&ext!=".JPEG"){
+        $.messager.alert("提示", "首页展示图限于bmp,png,gif,jpeg,jpg格式", "alert");
+        return;
+    }
+    var cate="crowd_funding";//固定传crowd_funding
+    var content="{";//图文部分的文字信息
+    var img_token=Guid.NewGuid().ToString();//图片上传token
+    var count=0;
+    $($("#contentDiv").children()).each(function (){
+        var filecontent = $(this).children().eq(0).children().eq(1);
+        var filedom = $(this).children().eq(1).children().eq(0);
+        if(filedom.val()!=""){
+            count++;
+            var key = filedom.attr("id");
+            var value = filecontent.val().replace(/\n/g,"\n");
+            content+='"'+key+'":"'+value+'",';
+        }
+    });
+    if(content!="{") content = content.substring(0,content.length-1);
+    content += "}";
+    if(count==0){
+        $.messager.alert("提示", "请至少上传一个图文内容！", "alert");
+        return;
+    }
+    var img_token=Guid.NewGuid().ToString();
+    var f = document.createElement("form");
+    f.action = _url+"img?img_token="+img_token+"&cate=event";
+    f.method = "post";
+    f.enctype="multipart/form-data";
+    $($("#imgUpload")).appendTo(f);
+    $(f).ajaxSubmit(function(s){
+        if(s.result=="2000");
+        {
+            var f2 = document.createElement("form");
+            f2.action = _url+"img?img_token="+img_token+"&cate="+cate;
+            f2.method = "post";
+            f2.enctype="multipart/form-data";
+            $($("#contentDiv").children()).each(function (){
+                var filedom = $(this).children().eq(1).children().eq(0);
+                if(filedom.val()!=""){
+                    filedom.appendTo(f2);
+                }
+            });
+            $(f2).ajaxSubmit(function(s2){
+                if(s2.result=="2000");
+                {
+                    $.ajax({
+                        type: "post",
+                        url: _url+"wechat/user/me/crowd",
+                        data: {token:token,u_id:uid,title:title,cate:cate,amount:amount,time:Time,yield_time:yield_time,mobile:mobile,shipping:shipping,shipping_fee:shipping_fee,brief:brief,yield_desc:yield_desc,content:content,apartment:apartment,open_file:open_file,price:price,quantity:quantity,is_limit:is_limit,active_at:active_at,local_only:local_only,img_token:img_token},
+                        dataType: "json",
+                        success: function (r) {
+                            alert(r.info);
+                            if(r.result=="2000"){
+                                $('#ad-dlg').dialog('close');
+                            }
+                        },
+                        error: function () {
+                            alert("调用添加众筹接口失败");
+                        }
+                    });
+                }
+            });
+        }
+    });
+}
+function viewDetail(id){
+   window.open('see_XQ.html?id='+id);
+}
+</script>
+</head>
+
+<body>
+    <div id="menuDiv" style="border-bottom: 2px solid #E7E8EC;padding-bottom: 3%;">
+        <div type="addZc" style="margin-top: 3%;margin-left:30px;padding-right:5px;float:left;">
+            <img src="../images/add.jpg"/>
+            <span style="position:relative;top:-13px;left:5px;">发布新的众筹</span>
+        </div>
+        <div type="6" style="margin-top: 3.8%;float:right;margin-right:30px;">
+            已失败的众筹
+        </div>
+        <div type="5" style="margin-top: 3.8%;float:right;margin-right:10px;">
+            已成功的众筹
+        </div>
+        <div type="4" style="margin-top: 3.8%;float:right;margin-right:10px;">
+            进行中的众筹
+        </div>
+        <div type="3" style="margin-top: 3.8%;float:right;margin-right:10px;">
+            预发布的众筹
+        </div>
+        <div type="2" style="margin-top: 3.8%;float:right;margin-right:10px;">
+            审核失败的众筹
+        </div>
+        <div type="1" style="margin-top: 3.8%;float:right;margin-right:10px;">
+            审核中的众筹
+        </div>
+        <div style="clear:both;"></div>
+    </div>
+    <!--发布新的众筹-->
+    <div id="addZcDiv" style="display:none;">
+        <div style="background-color:#E7E8EC;margin: 20px 40px;padding: 10px 5px 10px 5px;">为保障用户体验，青年创平台严禁恶意营销以及诱导分享朋友圈，严禁发布色情低俗、暴力血腥、政治谣言等各类违反法律法规及相关政府规定的信息。一旦发现，我们将严厉打击和处理。发布前请认证阅读青年创众筹相关服务协议。</div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height: 50px;"><tr>
+                <td class="title">众筹名称</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="title" style="width:100%;border:none;font-size: 16px;height: 40px;outline:medium;" placeholder="请输入众筹名称"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%"><tr>
+                <td class="title">添加首页图片</td>
+                <td style="padding-left:10px;">
+                    <!--<img src="../images/add_img.jpg" style="border: 1px solid #76C5EE;cursor: pointer;" class="add_img" alt=""/>-->
+                    <img id="logoPic" src="" width="160" height="100" style="border: 1px solid rgba(128, 128, 128, 0.29)" />
+                    <div id="fileDiv">
+                    </div>
+                </td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">众筹介绍</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="brief" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入众筹介绍"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;">
+                <tr>
+                     <td class="title">众筹类型</td>
+                    <td name="zc_p" onclick="cateClick(this)" value="0"  ck="1" style="float: left;margin: 10px;padding: 2px 26px;border-radius: 5px;border: 1px solid rgb(187, 184, 184);cursor: pointer;text-align: center;background-color: rgb(118, 197, 240);">筹人</td>
+                    <td name="zc_p" onclick="cateClick(this)" value="1"  ck="0" style="float: left;margin: 10px 5px 10px 6px;padding: 2px 26px;border-radius: 5px;border: 1px solid rgb(187, 184, 184);cursor: pointer;text-align: center;">筹钱</td>
+                    <td class="zc_cost" name="zc_cost" value="3" style="margin: 10px;">众筹成功后，青年创将收取总众筹金额2%作为平台使用费用</td>
+                </tr>
+            </table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">类型选择</td>
+                <td>
+                <!--<td style="padding-left:10px;">-->
+                    <span name="cate" value="1" onclick="cateClick(this)" ck="1" style="float:left;margin:10px 5px 10px 10px;padding:2px 10px;border-radius:5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">娱乐活动</span>
+                    <span name="cate" value="2" onclick="cateClick(this)" ck="0" style="margin:10px 6px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">个人生活</span>
+                    <span name="cate" value="3" onclick="cateClick(this)" ck="0" style="margin:10px 7px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">股权众筹</span>
+                    <span name="cate" value="4" onclick="cateClick(this)" ck="0" style="margin:10px 7px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">产品预售</span>
+                    <span name="cate" value="5" onclick="cateClick(this)" ck="0" style="margin:10px 5px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">创意发明</span>
+                    <span name="cate" value="6" onclick="cateClick(this)" ck="0" style="margin:10px 5px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">调查学习</span>
+                    <span name="cate" value="7" onclick="cateClick(this)" ck="0" style="margin:10px 8px 10px 10px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">爱心公益</span>
+                    <span name="cate" value="9" onclick="cateClick(this)" ck="0" style="margin:10px;padding:2px 18px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">下课约</span>
+                </td>
+            </tr></table>
+        </div>
+        <div class="ZC_M" style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">众筹金额</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="price" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入众筹金额" onblur="setAmount()"/></td>
+                <td class="title" style="border-left: 1px solid #BBB8B8;">众筹份数</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="quantity" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入众筹份数" onblur="setAmount()"/></td>
+                <td class="title" style="border-left: 1px solid #BBB8B8;">众筹总额</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="amount" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" readonly="readonly" value="0"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;">
+                <tr>
+                    <td class="title">众筹天数</td>
+                    <td style="padding-left:10px;">
+                    <input type="text" id="time" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入众筹天数"/></td>
+                    <td class="title PS" style="border-left: 1px solid #BBB8B8;display: none">是否配送</td>
+                    <td class="PS1" style="margin:0px 40px 0px 3px;padding-left: 10px;width: 21.2%;display: inline-block;display: none">
+                        <span name="shipping" value="0" onclick="cateClick(this)" ck="1" style="margin:10px 4px 10px 1px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">无配送</span>
+                        <span name="shipping" value="1" onclick="cateClick(this)" ck="0" style="margin:10px 9px 10px 0px;padding:2px 10px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">有配送</span>
+                    </td>
+                    <td class="title PS2" style="border-left: 1px solid #BBB8B8;display: none">配送费</td>
+                    <td class="PS3" style="padding-left:10px;display: none">
+                        <input type="text" id="shipping_fee" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" readonly="readonly" placeholder="请输入配送费" value="0"/>
+                    </td>
+                    <td class="title PS_1" style="border-left: 1px solid #BBB8B8;">众筹人数</td>
+                    <td class="PS_2" style="padding-left:10px;">
+                        <input type="text" id="people" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入众筹人数"/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">回报时间</td>
+                <td style="padding-left:10px;"><input type="text" id="yield_time" style="width:90px;border:none;font-size: 16px;outline:medium;height:40px;margin:0px 40px 0 0px;" placeholder="请输入1-60"/>天</td>
+                <td class="title" style="width:100px;border-left: 1px solid #BBB8B8;">总数限制</td>
+                <td style="padding-left:6px;">
+                    <span name="is_limit" value="0" onclick="cateClick(this)" ck="1" style="margin:10px 0px 0px 5px;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">否</span>
+                    <span name="is_limit" value="1" onclick="cateClick(this)" ck="0" style="margin:10px 0px 10px 4px;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">是</span>
+                </td>
+                <td class="title" style="border-left: 1px solid #BBB8B8;">仅限本校</td>
+                <td style="padding-left:10px;">
+                    <span name="local_only" value="0" onclick="cateClick(this)" ck="1" style="margin:10px 7px 10px 2px;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">否</span>
+                    <span name="local_only" value="1" onclick="cateClick(this)" ck="0" style="margin:10px -3px 10px 0px;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">是</span>
+                </td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">回报内容</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="yield_desc" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入回报内容"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">众筹开始时间</td>
+                <td style="padding-left:10px;">
+                    <input id="active_at" type="text" class="text-box" value="" style="border:none;font-size:16px;cursor:pointer;"  placeholder="点击选择时间" title="点击选择时间" readonly="readonly" style="cursor:pointer;"/>
+                </td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%"><tr>
+                <td class="title">图文内容</td>
+                <td style="padding-left:10px;">
+                    <div id="contentDiv"></div>
+                </td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">公开个人信息</td>
+                <td style="padding-left:10px;">
+                    <span name="gkxx" value="0" onclick="cateClick(this)" ck="1" style="margin:10px 10px 10px 0;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#76C5F0;">否</span>
+                    <span name="gkxx" value="1" onclick="cateClick(this)" ck="0" style="margin:10px 10px 10px 0;padding:2px 26px;float:left;border-radius: 5px;border:1px solid #BBB8B8;cursor:pointer;text-align:center;background-color:#fff;">是</span>
+                </td>
+                <td><span style="color:#A8A8A8">温馨提示：公开个人信息有助于众筹成功！！！</span></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100%;height:50px;"><tr>
+                <td class="title">联系电话</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="mobile" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入电话号码"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;">
+            <table style="width:100% height:50px;"><tr>
+                <td class="title">公寓地址</td>
+                <td style="padding-left:10px;">
+                <input type="text" id="apartment" style="width:100%;border:none;font-size: 16px;outline:medium;height:40px;" placeholder="请输入宿舍地址"/></td>
+            </tr></table>
+        </div>
+        <div style="border:1px solid #BBB8B8;margin:20px 40px;padding:10px;">
+            <table style="width:100%"><tr>
+                <td style="padding-left:10px;text-align:center;">
+                    <div style="cursor:pointer;border-radius: 5px;border:1px solid #BBB8B8;background-color:#76C5F0;padding:10px;" onclick="saveZcData()">发布</div>
+                </td>
+            </tr></table>
+        </div>
+    </div>
+    <div id="showZcDiv">
+    </div>
+    <script type="text/javascript" id='zcinfodom'>
+        <div id="showZcDiv_middle">
+            <div style="border-top:15px solid #E7E8EC;display: flex;" class="ZC_content" >
+                <div style="float:left; flex: 1"><img class="SH_Img" src="@zst" style="width:400px;height:250px" /></div>
+                <div class="Intro" style="margin: 10px 6px 10px 16px;float: left;flex: 1.2">
+                    <div style="font-weight:bold;font-size:1.8em;">@title</div>
+                    <div style="border-bottom:1px solid #DDDDDD;padding: 7px 0 10px 5px;margin-bottom: 10px;text-indent: 2rem;height: 77px;overflow: hidden;line-height: 28px;">@brief
+                    </div>
+                    <div style="padding-top:7px;">
+                        <span style="font-size: 18px">￥：@price</span>
+                        <span style="padding-left:40px;font-size: 18px">已筹：@yc元</span>
+                        <span style="padding-left:40px;font-size: 18px">剩余：@left_time天</span>
+                        <p style='font-size: 18px'>完成度：<b>@percentage%</b><progress id="prog" value="@sold_quantity" max="@target_quantity"></progress></p>
+                    </div>
+                    <div style="float: right;">
+                        <span name="nopass" value="0" style="display:none;cursor:pointer;color: #ffffff;border-radius: 5px;background-color:#76C5F0;padding:1px 18px;margin-left: 41px;" onclick="javascript:$('.audit_content_pass@id').show();" >查看不通过原因</span>
+                        <span name="details" value="0" style="cursor:pointer;color: #ffffff;border-radius: 5px;background-color:#76C5F0;padding:1px 18px;margin-left: 41px;" onclick="viewDetail('@id')" >查看详情</span>
+                        <!--<span style="cursor:pointer;color: #ffffff;border-radius: 5px;background-color:#76C5F0;padding:1px 26px;margin:10px 0px 0 10px;" onclick="javascript:alert('暂不支持编辑功能');">编辑</span>-->
+                        <span style="cursor:pointer;color: #ffffff;border-radius: 5px;background-color:#76C5F0;padding:1px 34px;margin:0 10px 0 10px" onclick="deleteZc('@id')">删除</span>
+                    </div>
+                </div>
+                <div style="clear:both;"></div>
+            </div>
+            <div class="audit_content_pass@id" style="display: none;float: left;border-top: 1px solid #DDDDDD;margin-bottom: 2px;width:99.8%">
+                <p style="font-size: 24px;float:left;width:100%;">很遗憾你的项目未通过官方审核，原因如下：</p>
+                <span class="cause" style="width: 100%;line-height: 24px;color: #979797;display: inline-block;float:left;text-indent: 2rem">@remark</span>
+                <p class="affirm"name="details" value="3" style="float:right;cursor:pointer;color: #ffffff;border-radius: 5px;background-color:#76C5F0;padding:1px 10px;margin-right:12px;"onclick="javascript:$('.audit_content_pass@id').hide();">确认</p>
+            </div>
+            <div style="clear:both;"></div>
+        </div>
+    </script>
+</body>
+</html>

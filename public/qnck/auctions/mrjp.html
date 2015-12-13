@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>每日竞拍</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script type="text/javascript" src="../js/common.js"></script>
+    <style type="text/css">
+        body {
+            background-color: #EFF0F4;
+            color: #959796;
+            max-width:555px;
+            margin-left:auto;
+            margin-right:auto;
+        }
+    </style>
+    <script>
+	    var starttime;
+	    var endtime;
+	    var zstime;
+	    var current_time_cz;
+	    var type="";//0：未开始 1：进行中 2：结束展示中
+
+	    var browser = {
+	        versions: function () {
+	            var u = navigator.userAgent, app = navigator.appVersion;
+	            return {         //移动终端浏览器版本信息
+	                trident: u.indexOf('Trident') > -1, //IE内核
+	                presto: u.indexOf('Presto') > -1, //opera内核
+	                webKit: u.indexOf('AppleWebKit') > -1, //苹果、谷歌内核
+	                gecko: u.indexOf('Gecko') > -1 && u.indexOf('KHTML') == -1, //火狐内核
+	                mobile: !!u.match(/AppleWebKit.*Mobile.*/), //是否为移动终端
+	                ios: !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/), //ios终端
+	                android: u.indexOf('Android') > -1 || u.indexOf('Linux') > -1, //android终端或uc浏览器
+	                iPhone: u.indexOf('iPhone') > -1, //是否为iPhone或者QQHD浏览器
+	                iPad: u.indexOf('iPad') > -1, //是否iPad
+	                webApp: u.indexOf('Safari') == -1 //是否web应该程序，没有头部与底部
+	            };
+	        }(),
+	        language: (navigator.browserLanguage || navigator.language).toLowerCase()
+	    }
+        $(document).ready(function () {
+        	BindData();
+        	if(browser.versions.mobile){
+	            if (browser.versions.android) {//安卓手机
+        			$("#zzdiv").height($("#tpdiv").height());
+	            } else {
+        			$("#zzdiv").height($("#tpdiv").height()+40);
+	            }
+	        }
+	        else{
+    			$("#zzdiv").height($("#tpdiv").height());
+	        }
+        });
+        function BindData() {
+            $.ajax({
+                type: "get",
+        		url: _url + "wechat/auction/show",
+                data: {},
+                dataType: "json",
+                success: function (r) {
+                    if (r.result == "2000") {
+                    	if(r.data){
+	                    	$("#zst").attr("jid",r.data.id);
+	                    	$("#zst").attr("url",r.data.url);
+			                $("#title").text(r.data.title);
+			                // $("#subtitle").text(r.data.sub_title);
+			                $("#price").text(r.data.cost);
+			                if(r.data.win_username)
+			                	$("#win_username").text(r.data.win_username);
+			                else
+			                	$("#win_username").text("暂无");
+			                $("#zst").attr("src",r.data.cover_img[0]);
+			                var current_time = r.data.current_time;
+			                current_time_cz = new Date(current_time.replace(/-/g,'/'))-new Date();
+			                var start_at = r.data.start_at;
+			                var end_at = r.data.end_at;
+			                starttime = start_at.replace(/-/g,'/');
+			                endtime = end_at.replace(/-/g,'/');
+			                zstime = new Date(end_at.replace("-","/"));
+	    					zstime.setMinutes(zstime.getMinutes() + 11, zstime.getSeconds(), 0);
+		                	$("#rtitle").css("font-size","22px");	
+		                	$("#timestr").css("font-size","30px");	
+			                if(current_time<start_at){
+			                	$("#rtitle").text("距开始时间");
+			                	type = "0";
+		                	}
+			                else if(current_time<end_at){
+			                	$("#rtitle").text("距结束时间");
+			                	type = "1";
+		                	}
+			                else if(current_time>end_at){
+			                	$("#rtitle").css("font-size","18px");	
+			                	$("#rtitle").text("此竞拍已结束,距下场开始");
+			                	// $("#timestr").css("font-size","18px");	
+			                	// $("#timestr").text("获得此竞拍者为："+r.data.win_username);
+			                	type = "2";
+		                	}
+		                	show_date_time();
+	                	}else{
+			                $("#title").text("当前无竞拍产品");
+		                	$("#rtitle").text("当前无竞拍产品");
+		                	type = "";
+	                	}
+                    }
+                },
+                error: function () {
+                    alert("加载失败!");
+                }
+            });
+        }
+        function show_date_time(){ 
+        	if(type=="")return;
+			window.setTimeout("show_date_time()", 80); 
+			var jsendtime;//设置倒计时结束时间
+			switch(type){
+				case "0":
+					jsendtime=new Date(starttime);
+					break;
+				case "1":
+					jsendtime=new Date(endtime);
+					break;
+				case "2":
+					jsendtime=new Date(zstime);
+					break;
+			}
+			var nowtime = new Date(new Date().getTime()+current_time_cz); 
+			var timeold=(jsendtime.getTime()-nowtime.getTime());
+			if(timeold<=0){
+				BindData();
+			}else{
+				var sectimeold=timeold/1000;
+				var secondsold=Math.floor(sectimeold);
+				var msPerDay=24*60*60*1000;
+				var e_daysold=timeold/msPerDay;
+				var daysold=Math.floor(e_daysold);
+				var e_hrsold=(e_daysold-daysold)*24;
+				var hrsold=Math.floor(e_hrsold);
+				var e_minsold=(e_hrsold-hrsold)*60;
+				var minsold=Math.floor((e_hrsold-hrsold)*60);
+				var e_seconds = (e_minsold-minsold)*60;
+				var seconds=Math.floor((e_minsold-minsold)*60);
+				var ms = e_seconds-seconds;
+				ms = new String(ms);
+				ms = ms.substr(2,2);
+				hrsold = hrsold+daysold*24;
+				$("#timestr").html((hrsold<10?'0'+hrsold:hrsold)+"时"+(minsold<10?'0'+minsold:minsold)+"分"+(seconds<10?'0'+seconds:seconds)+"秒"+ms);
+			}
+		} 
+		function viewDetail(){
+        	var url = $("#zst").attr("url");
+    		var id = $("#zst").attr("jid");
+            window.location.href=url+"?id="+id;
+		}
+		function cyjp(){
+			// if(type == "0"){
+			// 	alert("此竞拍还没开始，暂不能出价！");
+			// }else if(type=="1"){
+        		var id = $("#zst").attr("jid");
+            	window.location.href="jpcj.html?id="+id+"&type="+type;
+			// }else if(type=="2"){
+			// 	alert("此竞拍已经结束，不能出价！");
+			// }
+		}
+    </script>
+</head>
+<body>
+    <div id="content" onclick="viewDetail()" style="border:1px solid #DCDCDD;border-radius: 20px 20px 0px 0px;position:relative;">
+        <img id="zst" src="" style="width:100%;border-radius: 20px 20px 0px 0px;"/>
+        <div id="zzdiv" style="opacity: 0.5;filter:alpha(opacity=50);background-color:black;border-radius: 20px 20px 0px 0px;padding:10px 20px;position:absolute;top:0px;left:0px;right:0px;font-size:18px;line-height:25px;font-weight:bold;color:white;">
+        </div>
+        <div id="tpdiv" style="border-radius: 20px 20px 0px 0px;padding:10px 20px;position:absolute;top:0px;left:0px;right:0px;font-size:18px;line-height:25px;font-weight:bold;color:white;">
+        	<div style="padding-bottom:3px;"><div style="color:#82C3EB;float:left;">今日拍品|</div><div id="title" style="padding-left:75px;word-break:break-all;">&nbsp;</div></div>
+    		<div style="border-top:1px solid white;padding-top:3px;"><span style="color:#82C3EB;">市场价|</span>￥<span id="price"> </span></div>
+    		<div><span style="color:#82C3EB;">获得竞拍者|</span><span id="win_username"> </span></div>
+        </div>
+    </div>
+    <div id="remark" style="margin-top:1px;border:1px solid #DCDCDD;border-radius: 0px 0px 20px 20px;background-color:white;text-align:center;">
+    	<div id="rtitle" style="padding-top:15px;padding-bottom:8px;font-size:22px;">距开始还剩</div>
+    	<div id="timestr" style="padding-bottom:15px;font-size:30px;color:#7DB8DD"></div>
+    </div>
+    <div style="margin-top:10px;text-align:center;">温馨提示：以上商品为正品拍卖，请放心竞拍</div>
+     <div onclick="cyjp()" style="margin-top:15px;color:white;background-color:#6FB6E2;border-radius: 20px;width:100%;font-size:30px;text-align:center;padding:10px 0px;">
+        参与竞拍
+    </div>
+</body>
+</html>

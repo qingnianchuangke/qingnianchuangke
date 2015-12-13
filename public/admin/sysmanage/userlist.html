@@ -7,7 +7,7 @@
 <script type="text/javascript" src="../easyui/jquery.min.js"></script>
 <script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
 <script type="text/javascript" src="../js/common.js"></script>
-<link rel="stylesheet" href="../css/pintuer.css">
+<!-- <link rel="stylesheet" href="../css/pintuer.css"> -->
 <title>用户管理</title>
 <style>
 .choseButtonDiv {
@@ -311,7 +311,7 @@ table.altrowstable td {
 			success: function (result) {
 				if(JSON.parse(result).result=="2000"){
 					var roleHtml = "";
-	                var __data = JSON.parse(result).data;
+	                var __data = JSON.parse(result).data.rows;
 	                $.each(__data, function (i, v) {
 	                    var roletemp = '<div id="role_'+v.id+'" class="choseButtonDiv" onclick="choseButtonClick(this);" ck="0">'+v.name+'</div>';
 	                    roleHtml += roletemp;
@@ -398,7 +398,7 @@ table.altrowstable td {
 						var result = JSON.parse(r);
 						alert(result.info);
 						if(result.result=="2000"){
-							$("#user-dlg").dialog("close");
+							// $("#user-dlg").dialog("close");
 							BindData();
 						}
 					},

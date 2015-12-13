@@ -6,6 +6,8 @@
     <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
     <script type="text/javascript" src="/js/bannerlayout.js"></script>
     <style type="text/css">
+
+    
     .bg {
         background-size: cover;
         background-image: url('http://qnck001.oss-cn-hangzhou.aliyuncs.com/banner/1_inner.jpg');
@@ -33,7 +35,7 @@
         $(document).on('click', '#btn_share', function () {
             javascript:appObject.shareOnAndroid(1);
         });
-        var margin_top = 0.04;
+        var margin_top = 0.05;
         var height_ratio = 2.97;
         layout(margin_top, height_ratio);
     });
@@ -42,8 +44,7 @@
 <body>
     <div class="bg" id="bg"></div>
     <div class="menu" id="menu">
-        <a class="left"><div id="btn_share" class="share btn"></div></a>
-        <a class="right" href="{{$link}}" target="_blank"><div id="btn_download" class="download btn"></div></a>
+        <a href="{{$link}}" target="_blank"><div id="btn_download" class="download btn center"></div></a>
     </div>
 </body>
 </html>

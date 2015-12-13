@@ -80,8 +80,8 @@ class OfficeFundController extends \BaseController
             $fund->t_status = 4;
             $fund->save();
 
-            $push_msg = new PushMessage($fund->u_id);
-            $push_msg->pushMessage('您申请的基金第'.$repay->f_schema.'次已放款, 金额:'.$repay->f_re_money);
+            $msg = new MessageDispatcher($fund->u_id);
+            $msg->fireTextToUser('您申请的基金第'.$repay->f_schema.'次已放款, 金额:'.$repay->f_re_money);
 
             $re = Tools::reTrue('放款成功');
             DB::commit();
@@ -174,8 +174,8 @@ class OfficeFundController extends \BaseController
                 $fund->t_is_close = 0;
             }
 
-            $push_msg = new PushMessage($fund->u_id);
-            $push_msg->pushMessage('您基金的第'.$current_loan->f_schema.'次已结账, 金额:'.$current_income);
+            $msg = new MessageDispatcher($fund->u_id);
+            $msg->fireTextToUser('您基金的第'.$current_loan->f_schema.'次已结账, 金额:'.$current_income);
 
             $fund->save();
             $re = Tools::reTrue('回收放款成功');

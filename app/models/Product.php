@@ -7,6 +7,8 @@ class Product extends Eloquent
     public $primaryKey = 'p_id';
     public $timestamps = false;
 
+    private $_imgs = [];
+
     private function baseValidate()
     {
         $validator = Validator::make(
@@ -21,15 +23,57 @@ class Product extends Eloquent
         }
     }
 
+    public static function getProductCate($type)
+    {
+        $re = [];
+        switch ($type) {
+            // regular product
+            case 1:
+                $re = [
+                '1' => '校创精品',
+                '2' => '精神世界',
+                '3' => '品质生活',
+                '4' => '娱乐科技',
+                '5' => '运动健康',
+                '6' => '校创服务',
+                '7' => '其他',
+                ];
+                break;
+            // second hand product
+            case 2:
+                $re = [
+                '1' => '家电数码',
+                '2' => '鞋包服饰',
+                '3' => '书籍影音',
+                '4' => '创意手工',
+                '5' => '运动出行',
+                '6' => '虚拟商品',
+                '7' => '其它',
+                '8' => '赏金令',
+                ];
+                break;
+            
+            default:
+                # code...
+                break;
+        }
+        return $re;
+    }
+
     public function showInList()
     {
+        $this->loadImgs();
         $data = null;
         $data['id'] = $this->p_id;
         $data['title'] = $this->p_title;
-        $data['desc'] = $this->p_desc;
         $data['brief'] = $this->p_brief;
-        $data['imgs'] = Img::toArray($this->p_imgs);
-        $data['imgs'] = Img::filterKey('prod_img_', $data['imgs']);
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
+        $data['cover_img'] = Tools::checkNoImg($data['cover_img']);
+        $data['imgs'] = Img::filterKey('prod_img_', $this->_imgs, true);
+        if (!$data['imgs']) {
+            $data['imgs'] = null;
+        }
+        $data['content'] = $this->getContent();
         $data['price_origin'] = $this->p_price_origin;
         $data['price'] = $this->p_price;
         $data['discount'] = $this->p_discount;
@@ -37,7 +81,13 @@ class Product extends Eloquent
         $data['reply_count'] = $this->p_reply_count;
         $data['status'] = $this->p_status;
         $data['remark'] = $this->p_remark;
-
+        $data['praise_count'] = $this->p_praise_count;
+        $data['cate'] = $this->p_cate;
+        $data['active_at'] = $this->active_at;
+        $date = new DateTime($this->created_at);
+        $data['created_at'] = $date->format('Y-m-d H:i:s');
+        $data['created_at_timestamps'] = strtotime($data['created_at']);
+        $data['cate_label'] = $this->getCateLabel();
 
         if (!empty($this->quantity)) {
             $quantity = $this->quantity->showInList();
@@ -60,19 +110,31 @@ class Product extends Eloquent
 
     public function showDetail()
     {
+        $this->loadImgs();
         $data = null;
         $data['prod_name'] = $this->p_title;
-        $data['prod_desc'] = $this->p_desc;
         $data['prod_brief'] = $this->p_brief;
         $data['prod_cost'] = $this->p_cost;
         $data['prod_price_origin'] = $this->p_price_origin;
         $data['prod_price'] = $this->p_price;
         $data['prod_discount'] = $this->p_discount;
-        $data['imgs'] = Img::toArray($this->p_imgs);
-        $data['imgs'] = Img::filterKey('prod_img_', $data['imgs']);
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
+        $data['cover_img'] = Tools::checkNoImg($data['cover_img']);
+        $data['imgs'] = Img::filterKey('prod_img_', $this->_imgs, true);
+        if (!$data['imgs']) {
+            $data['imgs'] = null;
+        }
+        $data['content'] = $this->getContent();
         $data['reply_count'] = $this->p_reply_count;
         $data['status'] = $this->p_status;
         $data['remark'] = $this->p_remark;
+        $date = new DateTime($this->created_at);
+        $data['created_at'] = $date->format('Y-m-d');
+        $data['praise_count'] = $this->p_praise_count;
+        $data['cate'] = $this->p_cate;
+        $data['open_file'] = $this->open_file;
+        $data['mobile'] = $this->p_mobile;
+        $data['cate_label'] = $this->getCateLabel();
 
         $quantity = null;
         if (!empty($this->quantity)) {
@@ -86,16 +148,6 @@ class Product extends Eloquent
         }
         $data['promo'] = $promo;
 
-        $replies = null;
-        if (!empty($this->replies)) {
-            $list = [];
-            foreach ($this->replies as $key => $reply) {
-                $list[] = $reply->showInList();
-            }
-            $replies = $list;
-        }
-        $data['replies'] = $replies;
-
         if (!empty($this->booth)) {
             $data['booth'] = $this->booth->showInList();
         }
@@ -104,7 +156,38 @@ class Product extends Eloquent
             $data['user'] = $this->user->showDetail();
         }
 
+        if ($this->replies) {
+            $tmp = [];
+            foreach ($this->replies as $key => $reply) {
+                $tmp[] = $reply->showInList();
+            }
+            $data['replies'] = $tmp;
+        }
+
+        if ($this->favorites) {
+            if (count($this->favorites) > 0) {
+                $data['is_favorited'] = 1;
+            } else {
+                $data['is_favorited'] = 0;
+            }
+        }
         return $data;
+    }
+
+    public function getContent()
+    {
+        $content = json_decode($this->p_desc, JSON_OBJECT_AS_ARRAY);
+        $pic_text = [];
+        if (empty($this->_imgs)) {
+            $this->loadImgs();
+        }
+        $imgs = Img::filterKey('prod_img_', $this->_imgs, true);
+        foreach ($imgs as $key => $img) {
+            $txt = empty($content[$key]) ? '' : $content[$key];
+            $pic_text[] = ['img' => $img, 'text' => $txt];
+        }
+
+        return $pic_text;
     }
 
     public function addProduct()
@@ -120,7 +203,6 @@ class Product extends Eloquent
         $this->sort = $sort;
         $this->p_reply_count = 0;
         $this->created_at = $now->format('Y-m-d H:i:s');
-        $this->p_active_at = $now->format('Y-m-d H:i:s');
         $this->save();
         return $this->p_id;
     }
@@ -129,7 +211,7 @@ class Product extends Eloquent
     {
         $now = new DateTime;
         $this->baseValidate();
-        $this->p_active_at = $now->format('Y-m-d H:i:s');
+        $this->active_at = $now->format('Y-m-d H:i:s');
         $this->save();
 
         $quantity = ProductQuantity::where('p_id', '=', $this->p_id)->first();
@@ -188,6 +270,23 @@ class Product extends Eloquent
         return DB::statement($sql);
     }
 
+    public function getCateLabel()
+    {
+        if (!$this->p_type) {
+            return '';
+        }
+        $cates = Product::getProductCate($this->p_type);
+        if (!$this->p_cate) {
+            return '';
+        }
+        return $cates[$this->p_cate];
+    }
+
+    private function loadImgs()
+    {
+        $this->_imgs = Img::toArray($this->p_imgs);
+    }
+
     // laravel relation
     
     public function quantity()
@@ -205,13 +304,23 @@ class Product extends Eloquent
         return $this->hasOne('PromotionInfo', 'p_id', 'p_id');
     }
 
-    public function replies()
-    {
-        return $this->hasMany('ProductReply', 'p_id', 'p_id');
-    }
-
     public function user()
     {
         return $this->belongsTo('User', 'u_id', 'u_id');
+    }
+    
+    public function praises()
+    {
+        return $this->morphToMany('Praise', 'praisable');
+    }
+
+    public function favorites()
+    {
+        return $this->morphToMany('Favorite', 'favoriable');
+    }
+
+    public function replies()
+    {
+        return $this->morphToMany('Reply', 'repliable');
     }
 }

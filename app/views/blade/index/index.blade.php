@@ -19,19 +19,19 @@
             <div>
                 <img style="width:200px;z-index: 300;position: absolute;left: 23px;"src="./images/butt-bg.png"/>
                 <div id="download" style="z-index: 301;position: absolute;margin:12px 0 0 0px;font-size: 15px;color: white;">
-                    下载应用
+                    <a href="http://www.pgyer.com/qnck2">下载应用</a>
                 </div>
             </div>
             <div>
                 <ul id="left-ul" style="margin-top:60px">
                     <li id="about" style="border-top:solid 1px rgb(99, 99, 102)">
-                        关于我们
-                    </li>
-                    <li id="join">
-                        成为创客
+                        关于青年创
                     </li>
                     <li id="recruit">
-                        公司招聘
+                        招募创客
+                    </li>
+                    <li id="faq">
+                        常见问题
                     </li>
                     <li id="law">
                         法律相关
@@ -42,31 +42,20 @@
                         <div>
                             <img style="width: 130px"src="./images/wxscan.png"/>
                         </div>
-                        <div style="color: #e77817">
+                        <div style="color: #46B4E7">
                             青创微信服务平台
                         </div>
                     </li>
                     <li>
-                        <div style="margin-top: 20px;">
+                        <div style="margin-top: 40px;">
                             <img style="width:200px;z-index: 300;position: absolute;left: 30px;"src="./images/contact-border.png"/>
                             <div style="z-index: 301;position: absolute;margin:12px 0 0 8px;">
                                 联系方式
                             </div>
                         </div>
-                        <p style="font-size: 30px;margin-top: 70px;">028-84515536</p>
+                        <p style="font-size: 30px;margin-top: 110px;">400-668-0550</p>
                         <p>----</p>
-                        <p style="font-size: 16px">
-                            QQ 340246677
-                        </p>
-                        <p>
-                            ----
-                        </p>
-                        <p style="font-size: 18px;line-height: 30px">
-                            桐梓林北路
-                        </p>
-                        <p style="font-size: 18px;line-height: 30px">
-                            中华园中苑16号3栋2单元A座
-                        </p>
+                       <p style="font-size: 20px;margin-top: 0px;">中国 成都</p>
                     </li>
                 </ul>
             </div>
@@ -85,27 +74,26 @@
                 <div class="nav-right">
                     <ul>
                         <li id="syLink">
-                            首页
+                            <div>首页</div>
                         </li>
                         <li id="funLink">
-                            应用功能
+                             <div>应用功能</div>
                         </li>
                         <li id="unionLink">
-                            <div>创客联盟</div>
+                             <div>创客联盟</div>
                         </li>
+                        <!--<li id="backLogin">-->
+                            <!--<div> <a class="back_Login" href="">WEB用户登录</a></div>-->
+                        <!--</li>-->
                     </ul>
                 </div>
             </div>
-            <div class="js-flickity" data-js-module="hero-gallery">
-                <div >
-                    <img id="one" src="./images/bg01.jpg"/>
-                </div>
-                <div>
-                    <img id="two" src="./images/bg02.jpg"/>
-                </div>
-                <div>
-                    <img id="three" src="./images/bg03.jpg"/>
-                </div>
+            <div class="flexslider js-flickity">
+                <ul class="slides">
+                    <li ><img id="one" src="./images/bg01.jpg"/></li>
+                    <li ><img id="two" src="./images/bg02.jpg"/></li>
+                    <li ><img id="three" src="./images/bg03.jpg"/></li>
+                </ul>
             </div>
             <div class="second-content">
                 <div>
@@ -119,6 +107,7 @@
                 </div>
             </div>
             <div class="fun">
+                <div style="width: 100%;margin:0;height: 3px;border-top: solid 1px gainsboro"></div>
                 <div class="fun-font">
                     <p style="margin-bottom:10px;">
                         <img src="./images/function.png"/>
@@ -127,7 +116,7 @@
                         青年创 应用程序
                     </p>
                     <p style="font-size: 14px;height: 10px">
-                        打造方便、实用、有趣的使用体验
+                        全心全力支持每一位校园创客
                     </p>
                 </div>
                 <div class="fun-list">
@@ -136,7 +125,7 @@
                             <div id="1" style="background: url(./images/A.png)">
                                 <div></div>
                                 <div id="mask1">
-                                    <p>便捷开店</p>
+                                    <p>自助创业</p>
                                     <img src="./images/up.png"/>
                                 </div>
                             </div>
@@ -145,7 +134,7 @@
                             <div id="2" style="background: url(./images/B.png)">
                                 <div></div>
                                 <div id="mask2">
-                                    <p>店铺分类</p>
+                                    <p>校园乐购</p>
                                     <img src="./images/up.png"/>
                                 </div>
                             </div>
@@ -154,7 +143,7 @@
                             <div id="3" style="background: url(./images/D.png)">
                                 <div></div>
                                 <div id="mask3" >
-                                    <p>校园社交</p>
+                                    <p>互动社交</p>
                                     <img src="./images/up.png"/>
                                 </div>
                             </div>
@@ -163,25 +152,7 @@
                             <div id="4" style="background: url(./images/C.png)">
                                 <div></div>
                                 <div id="mask4">
-                                    <p>财务报表</p>
-                                    <img src="./images/up.png"/>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="5" style="background: url(./images/E.png)">
-                                <div></div>
-                                <div id="mask5">
-                                    <p>个性设置</p>
-                                    <img src="./images/up.png"/>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div id="6" style="background: url(./images/F.png)">
-                                <div></div>
-                                <div id="mask6">
-                                    <p>分享推广</p>
+                                    <p>兼职/工作</p>
                                     <img src="./images/up.png"/>
                                 </div>
                             </div>
@@ -192,9 +163,9 @@
                     <div>
                         <img id="funClose" src="./images/fun-close.png"/>
                     </div>
-                        <img id="funContent"/>
-                        <img id="funLeft" src="./images/fun-left.png"/>
-                        <img id="funRight" src="./images/fun-right.png"/>
+                    <img id="funContent"/>
+                    <img id="funLeft" src="./images/fun-left.png"/>
+                    <img id="funRight" src="./images/fun-right.png"/>
                 </div>
             </div>
             <div class="union">
@@ -203,10 +174,10 @@
                         <img src="./images/union.png"/>
                     </p>
                     <p style="font-size: 37px;line-height: 37px;height: 51px;">
-                        足够努力 梦想从不遥远
+                        我们与你一起努力  梦想就会越来越近
                     </p>
                     <p style="font-size: 14px;height: 27px">
-                        青年创 全心支持每一位校园创客
+                        ——青年创  全心全力支持每一位校园创客。
                     </p>
                     <p>
                         <img src="./images/union-bg.png" style="width:700px;margin:178px 0 0 -350px;position: absolute;z-index: 101;left:50%;top:0;"/>
@@ -214,19 +185,19 @@
                     </p>
                 </div>
                 <div style="height: 300px;width: 100%;position:absolute;top:720px;left:50%;margin: 0 0 0 -50%">
-                    <p style="text-align:center;font-size:12px">我是文字而且居中对齐</p>
+                    <p style="text-align:center;font-size:14px;margin-bottom:20px;" id="funFont">创业想法够坚定    搞定资金SO EASY</p>
                     <ul class="union-ul">
                         <li id="cy" style="color:black;">
-                            创业者
+                            创服务
                         </li>
                         <li id="fw">
-                            服务者
+                            创信任
                         </li>
                         <li id="cl">
-                            创乐者
+                            创乐趣
                         </li>
                         <li id="tz">
-                            投资者
+                            创理想
                         </li>
                     </ul>
                     <img src="./images/union-change.png" style="margin:80px 0 0 -221px;position: absolute;left:50%;top:30px;z-index: 100"/>
@@ -241,40 +212,40 @@
                     <div style="color:white;font-size: 16px;text-align:center;">青年创客 全心支持每一位校园创客</div>
                 </div>
                 <img src="./images/map.png" style="width:1000px;margin:5px 0 0 -500px;position: absolute;z-index: 100;left:50%"/>
-                <img src="./images/register.png" style="position: absolute;z-index: 101;left: 50%;margin-left:-118px;bottom:-26px;cursor: pointer"/>
+<!--                <img src="./images/register.png" style="position: absolute;z-index: 101;left: 50%;margin-left:-118px;bottom:-26px;cursor: pointer"/>-->
             </div>
             <div class="link">
                 <ul class="menu01">
                     <li id="syLink2"style="width: 22%">
                         首页
                     </li>
-                    <li style="width: 5%;font-size: 28px;color:#d7394f ">
+                    <li style="width: 5%;font-size: 25px;color:#46B4E7 ">
                         •
                     </li>
                     <li id="funLink2"style="width: 34%">
                         应用功能
                     </li>
-                    <li style="width: 5%;font-size: 28px;color:#d7394f ">
+                    <li style="width: 5%;font-size: 25px;color:#46B4E7 ">
                         •
                     </li>
                     <li id="unionLink2"style="width: 34%">
                         创客联盟
                     </li>
                 </ul>
-                <ul class="menu02">
+                <ul class="menu02" id="">
                     <li>
-                        成为创客
+                        <a href="http://www.pgyer.com/qnck2">下载应用</a>
                     </li>
-                    <li>
-                        公司招聘
+                    <li id="recruit2">
+                        招募创客
                     </li>
-                    <li>
+                    <li id="aboutLaw">
                         法律相关
                     </li>
-                    <li>
-                        微信平台
+                    <li id="faq2">
+                        常见问题
                     </li>
-                    <li>
+                    <li id="aboutUs">
                         关于我们
                     </li>
                 </ul>
@@ -285,17 +256,23 @@
             </div>
         </div>
 </body>
+    <script src="./js/word.js"></script>
     <script src="./js/chuangke.js"></script>
-    <script src="js/wheel.js"></script>
+    <!--<script src="js/wheel.js"></script>-->
+    <script src="js/jquery.flexslider-min.js"></script>
     <script>
+        $('.flexslider').flexslider({
+            directionNav: true,
+            pauseOnAction: false
+        });
         var broWidth;
         broWidth = document.body.clientWidth;
         var imgHeight = 1135 * broWidth / 2396;
         $(".js-flickity").css("height", imgHeight + "px");
         $(".fun").css("top", imgHeight);
-        $(".union").css("top", imgHeight+1140+"px");
-        $(".develop").css("top", imgHeight + 1140 + 940 + "px");
-        $(".link").css("top", imgHeight + 1140 + 940 + 770 + "px");
-        $(".footer").css("top", imgHeight + 1140 + 940 + 770 +180+ "px");
+        $(".union").css("top", imgHeight+850+"px");
+        $(".develop").css("top", imgHeight + 850 + 940 + "px");
+        $(".link").css("top", imgHeight + 850 + 940 + 770 + "px");
+        $(".footer").css("top", imgHeight + 850 + 940 + 770 +180+ "px");
     </script>
 </html>

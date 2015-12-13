@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/manage.css" media="screen">
+    <script src="../js/jquery.min.js"></script>
+    <script src="../../js/common.js"></script>
+</head>
+<script type="text/javascript">
+    $(document).delegate('.kernel_module_2 ul li', 'click', function(ev){
+        $('.kernel_module_2 ul li').removeClass('default_add');
+        $(this).addClass('default_add');
+        var this_a = $(this).children();
+        this_a.css('border-bottom','none');
+    });
+    var token;
+    var uid;
+    $(document).ready(function () {
+        token = getCookie("token");
+        uid = getCookie("uid");
+        $.ajax({
+            type: "get",
+            url: _url + "wechat/user/me/profile/base",
+            data: {token:token,u_id:uid},
+            dataType: "json",
+            success: function (r) {
+                if (r.result == "2000") {
+                    var data = r.data;
+                    if(data.stu_verified=="1" && data.id_verified=="1"){
+                        $(".rz").show();
+                    }
+                    if(data.is_club_verified=="1"){
+                        $(".rz").hide();
+                        $(".st").show();
+                    }
+                    $("#usernickname").text(data.nickname);
+                    $("#headimg").attr("src",data.head_img);
+                }else{
+                    alert("Get userinfo Faid:"+r.info);
+                }
+            },
+            error: function () {
+                alert("Communication error!");
+            }
+        });
+    });
+</script>
+<body>
+<div class="main">
+    <header>
+        <div class="header_nav">
+            <div class="header_left">
+                <img src="../images/manageLogo.png" alt=""/>
+            </div>
+            <div class="header_right">
+                <div class="img">
+                    <img id="headimg" src="../images/head_portrait.jpg" style="width:80px;border-radius:38px;" alt=""/>
+                </div>
+                <div class="con_ul">
+                    <ul class="header_ul">
+                        <li><div class="st" style="display:none">社团组织</div></li>
+                        <li><div class="rz" style="display:none">已认证</div></li>
+                        <li class="user" id="usernickname"></li>
+                        <!-- <li class="message"><img src="../images/message.jpg" alt=""/></li> -->
+                        <li class="exit">退出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div style="clear:both;"></div>
+    </header>
+    <div class="mi_content">
+   <main>
+        <div class="main_left">
+            <div class="kernel_module">
+                <div class="kernel_module_1">
+                    <img src="../images/kernel_module.png" alt=""/>
+                    <span>核心模块</span>
+                </div>
+                <div class="kernel_module_2">
+                    <ul>
+                        <li><a HREF="schoolyard_ZC.html" TARGET="win">校园众筹</a></li>
+                        <li><a href="flea_Boutique.html" target="win">Flea精品</a></li>
+                        <li><a>店铺管理</a></li>
+                        <li><a>毕业招聘</a></li>
+                        <li><a>学生兼职</a></li>
+                    </ul>
+                </div>
+            </div>
+            <!--<div class="generalize_module">-->
+                <!--<div class="generalize_module_1">-->
+                    <!--<img src="../images/generalize_module.png" alt=""/>-->
+                    <!--<span>推广模块</span>-->
+                <!--</div>-->
+                <!--<div class="generalize_module_2">-->
+                    <!--<ul>-->
+                        <!--<li><a href="werben.html" target="win">发布广告</a></li>-->
+                    <!--</ul>-->
+                <!--</div>-->
+            <!--</div>-->
+            <div class="module_set">
+                <div class="module_set_1">
+                    <img src="../images/module_set.png" alt=""/>
+                    <span>模块设置</span>
+                </div>
+                <div class="module_set_2">
+                    <ul>
+                        <li><a id="if1" href="#" target="if">账号设置</a></li>
+                        <li><a>认证中心</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+       <div class="main_right">
+           <iframe id="win" align="center" scrolling="no" name="win" frameBorder=0   src="homepage.html"></iframe>
+       </div>
+   </main>
+</div>
+</div>
+</body>
+<script type="text/javascript">
+//    //注意：下面的代码是放在和iframe同一个页面调用,放在iframe下面
+//    $("#win").load(function () {
+//        var ifm = document.getElementById("win");
+//        var subWeb = document.frames ? document.frames["win"].document : ifm.contentDocument;
+//        if (ifm != null && subWeb != null) {
+//            ifm.height = subWeb.body.scrollHeight;
+//        }
+//    });
+</script>
+</html>

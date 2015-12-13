@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" type="text/css" href="../easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="../easyui/themes/icon.css">
+<script type="text/javascript" src="../easyui/jquery.min.js"></script>
+<script type="text/javascript" src="../easyui/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../js/common.js"></script>
+<script type="text/javascript" src="../js/jquery.form.js"></script>
+<script type="text/javascript" src="../js/Generation_Guid.js"></script>
+<title>商品管理页面</title>
+<style type="text/css">
+table.altrowstable {
+	font-family: verdana,arial,sans-serif;
+	font-size:11px;	
+	color:#333333;
+	border-width: 1px;
+	border-color: #a9c6c9;
+	border-collapse: collapse;
+}
+table.altrowstable td {
+	border-width: 1px;
+	padding: 8px;
+	border-style: solid;
+	border-color: #a9c6c9;
+}
+.rightTd{
+	width: 580px;
+	background-color:#d4e3e5;
+	border-bottom:1px solid red
+}
+.leftTd{
+	text-align: right;
+	width: 150px;
+	background-color:#c3dde0;
+}
+</style>
+<script>
+$(document).ready(function () {
+    BindData();
+    $("#tt").datagrid('getPager').pagination({
+        onSelectPage:function(pageNum, pageSize){
+            BindData();
+        }
+    });
+});
+//绑定数据
+function BindData() {
+    var pageNumber = $("#tt").datagrid('getPager').data("pagination").options.pageNumber;
+    var pageSize = $("#tt").datagrid('getPager').data("pagination").options.pageSize;
+    $.ajax({
+        type: "get",
+        url: _url+'office/product',
+        data: {page:pageNumber,per_page:pageSize},
+        dataType: "text",
+        success: function (r) { 
+            var result = JSON.parse(r);
+            if(result.result == "2000")
+                $("#tt").datagrid("loadData", result.data);
+            else 
+                $.messager.alert("提示", result.info, "alert");
+        },
+        error: function () {
+            alert("加载失败!");
+        }
+    });
+}
+function formatStatus(value, row){
+    if(value=="1")
+        return "正常";
+    else
+        return "禁用";
+}
+function formatDiscount(value){
+    return value+"%";
+}
+function formatOpt(value, row){
+    if(row.status=="1")
+        return '<a class="alink-edit" onclick="changeStatus(\'0\',\'禁用\',\''+row.id+'\')" href="#">[禁用]</a>';
+    else
+        return '<a class="alink-edit" onclick="changeStatus(\'1\',\'启用\',\''+row.id+'\')" href="#">[启用]</a>';
+}
+function changeStatus(ty,msg,id){
+    $.messager.confirm("提示", "确认"+msg+"选中商品！", function (r) {
+        if (r) {
+            var remark="";
+            remark = prompt("请输入"+msg+"选中商品的原因：", ""); 
+            if(ty=="0"&&remark==null){
+                return;
+            }
+            else if(ty=="0"&&remark==""){
+                $.messager.alert("提示", "请输入禁用选中商品的原因!", "alert");
+                return;
+            }
+            $.ajax({
+                type: "put",
+                url: _url+'office/product/'+id+"/enable",
+                data: {status:ty,remark:remark},
+                dataType: "text",
+                success: function (r) {
+                    var result = JSON.parse(r);
+                    alert(result.info);
+                    if(result.result=="2000"){
+                        BindData();
+                    }
+                },
+                error: function () {
+                    alert("操作失败!");
+                }
+            });
+        }
+    });
+}
+function formatView(value, row){
+    return "<a class='alink-edit' style='color:blue' href='#' onclick='viewDetail("+row.id+")'>[查看明细]</a>";
+}
+function viewDetail(pid){
+
+}
+
+function formatUserName(value,row){
+    if(row.user)
+        return row.user.name;
+    else
+        return "";
+}
+function formatShopName(value,row){
+    if(row.booth)
+        return row.booth.title;
+    else
+        return "";
+}
+function formatShopType(value,row){
+    if(row.booth)
+        return row.booth.type=="2"?"创的店":"便利店";
+    else
+        return "";
+}
+</script>
+</head>
+
+<body>
+<table id="tt" title="商品列表" class="easyui-datagrid" data-options="
+            rownumbers:true,
+            fit:true,
+            singleSelect:true,
+            pagination:true,
+            pageSize:20,
+            idField:'id',
+            nowrap:false,
+            toolbar:'#menuTollbar'">
+    <thead>
+        <tr>
+            <th data-options="field:'id',width:40,align:'left',halign:'center'">id</th>
+            <th data-options="field:'username',width:80,align:'left',halign:'center',formatter:formatUserName">用户名称</th>
+            <th data-options="field:'shopname',width:200,align:'left',halign:'center',formatter:formatShopName">店铺名称</th>
+            <th data-options="field:'shoptype',width:80,align:'left',halign:'center',formatter:formatShopType">店铺类型</th>
+            <th data-options="field:'title',width:180,align:'left',halign:'center'">商品名称</th>
+            <th data-options="field:'price_origin',width:80,align:'right',halign:'center'">原价</th>
+            <th data-options="field:'discount',width:40,align:'center',halign:'center',formatter:formatDiscount">折扣</th>
+            <th data-options="field:'price',width:80,align:'right',halign:'center'">现价</th>
+            <th data-options="field:'brief',width:380,align:'left',halign:'center'">描述</th>
+            <!-- <th data-options="field:'view',width:80,align:'center',halign:'center',formatter:formatView">查看明细</th> -->
+            <th data-options="field:'status',width:80,align:'center',halign:'center',formatter:formatStatus">状态</th>
+            <th data-options="field:'option',width:80,align:'center',halign:'center',formatter:formatOpt">操作</th>
+        </tr>
+    </thead>
+</table>
+<div id="menuTollbar" style="height: auto;">
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="BindData();">刷新</a>
+</div>
+</body>
+</html>

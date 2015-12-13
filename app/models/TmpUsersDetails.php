@@ -30,7 +30,7 @@ class TmpUsersDetails extends Eloquent
     {
         $data = [];
         $data['identity_number'] = $this->u_identity_number;
-        $data['identity_imgs'] = Img::toArray($this->u_identity_img);
+        $data['identity_imgs'] = Img::toArray($this->u_identity_img, true);
         $data['home_adress'] = $this->u_home_adress;
         $data['father_name'] = $this->u_father_name;
         $data['father_telephone'] = $this->u_father_telephone;
@@ -76,8 +76,8 @@ class TmpUsersDetails extends Eloquent
         } else {
             $content = '审核用户信息记录, '.$old_status;
         }
-        $pushMsgObj = new PushMessage($this->u_id);
-        $pushMsgObj->pushMessage($content);
+        $msg = new MessageDispatcher($this->u_id);
+        $msg->fireTextToUser($content);
         $this->addCensorLog($content);
         return $this->save();
     }

@@ -1,16 +1,14 @@
 <?php
 
-class BaseController extends Controller {
+class BaseController extends Controller
+{
+    protected $u_id = 0;
 
-    /**
-     * Setup the layout used by the controller.
-     *
-     * @return void
-     */
-    protected function setupLayout()
+    public function __construct()
     {
-        if (!is_null($this->layout)) {
-            $this->layout = View::make($this->layout);
+        $u_id = Input::get('u_id', 0);
+        if ($u_id) {
+            $this->u_id = $u_id;
         }
     }
 }

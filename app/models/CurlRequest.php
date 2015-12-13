@@ -2,7 +2,7 @@
 /**
 *
 */
-class CurlRequest extends Eloquent
+class CurlRequest
 {
     private $_ch;
     private $_get_config = [

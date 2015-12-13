@@ -104,11 +104,12 @@ class TxtMessage extends Eloquent{
             $this->save();
             return true;
         } else {
-            if (is_object($re)) {
-                throw new Exception($re->message, 1);
-            } else {
-                throw new Exception("短信发送失败", 1);
-            }
+            return false;
+            // if (is_object($re)) {
+            //     throw new Exception($re->message, 1);
+            // } else {
+            //     throw new Exception("短信发送失败", 1);
+            // }
         }
     }
 }

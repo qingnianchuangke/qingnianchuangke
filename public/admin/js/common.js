@@ -1,6 +1,4 @@
-	//var _url="http://www.qnck.dev/";
-	//var _url="http://www.54qnck.com/";
-	var _url="http://www.test.54qnck.com/";
+	document.write("<script type='text/javascript' src='/admin/js/url.js'></script>");
 	$pintuercheck=function(element,type,value){
 		$pintu=value.replace(/(^\s*)|(\s*$)/g, "");
 		switch(type){
@@ -70,4 +68,13 @@ function GetQueryString(name)
 	var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
 	var r = window.location.search.substr(1).match(reg);
 	if(r!=null)return  unescape(r[2]); return null;
+}
+function loding(_msg) {
+    $.messager.progress({
+        title: '请稍后',
+        msg: _msg
+    });
+}
+function closeLoing() {
+    $.messager.progress('close');
 }

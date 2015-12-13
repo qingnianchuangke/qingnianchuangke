@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>学校选择</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <style type="text/css">
+        body {
+            color: #959796;
+            background-color: #EFF0F4;
+            text-align: center;
+            max-width:555px;
+            margin-left:auto;
+            margin-right:auto;
+        }
+
+        .cover_img {
+            width: 100%;
+        }
+
+        .top h4 {
+            color: black;
+            font-weight: bold;
+        }
+        input{outline:none} 
+    </style>
+    <script type="text/javascript">
+    var rurl  = "";
+    $(document).ready(function () {
+        rurl = GetQueryString("rurl");
+    });
+    function search (value) {
+        $("#schoolDiv").html("");
+        $.ajax({
+            type: "get",
+            url: _url + "wechat/dic/school",
+            data: {key:value},
+            dataType: "json",
+            success: function (r) {
+                if (r.result == "2000") {
+                    for (var i = 0; i < r.data.length; i++) {
+                        var temp = r.data[i].province+"·"+r.data[i].city+"·"+r.data[i].school;
+                        var re = "";
+                        if(i==r.data.length-1)
+                            re = '<div sid="'+r.data[i].id+'" sname="'+r.data[i].school+'" onclick="chooseSchhol(this)" style="margin-left:20px;padding-left:10px;">';
+                        else
+                            re = '<div sid="'+r.data[i].id+'" sname="'+r.data[i].school+'" onclick="chooseSchhol(this)" style="border-bottom:1px solid #D0D1D2;margin-left:20px;padding-left:10px;">';
+                        $("#schoolDiv").append(re+temp+"</div>");
+                    };
+                }
+            },
+            error: function () {
+                alert("加载失败!");
+            }
+        });
+    }
+    function chooseSchhol (obj) {
+        var sid =$(obj).attr("sid");
+        var sname =$(obj).attr("sname");
+        window.location.href="registr.html?sid="+sid+"&sname="+escape(sname) + "&rurl="+rurl;
+    }
+    </script>
+</head>
+<body>
+    <p style="padding-top:50px;">选择学校</p>
+    <p style="padding-top:10px;">温馨提示：学校一经选择，以后不允许变更，请选择真实的所在学校。</p>
+    <div style="position:relative;width:80%;margin:0 auto;">
+        <img style="float:left;height:20px;position:absolute;top:10px;left:20px" src="images/sosuo.png" />
+        <input type="text" placeholder="输入学校关键字搜索..." oninput="search(this.value)" style="width:100%;height:40px;text-align:center;border:1px solid #E4E6E6;border-radius: 20px;" />
+    </div>
+    
+    <div style="width:100%;background-color:white;border-top:1px solid #D0D1D2;border-bottom:1px solid #D0D1D2;margin-left:-8px;padding-right:16px;margin-top:20px;text-align:left;line-height:30px;" id="schoolDiv">
+    </div>
+</body>
+</html>

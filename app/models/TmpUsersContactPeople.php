@@ -41,7 +41,7 @@ class TmpUsersContactPeople extends Eloquent
 
         $this->load('school');
         $data['school'] = $this->school->showInList();
-        $data['student_img'] = Img::toArray($this->u_student_img);
+        $data['student_img'] = Img::toArray($this->u_student_img, true);
         $data['student_number'] = $this->u_student_number;
         $data['teacher_name'] = $this->u_teacher_name;
         $data['teacher_phone'] = $this->u_teacher_telephone;
@@ -98,8 +98,8 @@ class TmpUsersContactPeople extends Eloquent
         } else {
             $content = '审核联系人信息记录, '.$old_status;
         }
-        $pushMsgObj = new PushMessage($this->u_id);
-        $pushMsgObj->pushMessage($content);
+        $msg = new MessageDispatcher($this->u_id);
+        $msg->fireTextToUser($content);
         $this->addCensorLog($content);
         return $this->save();
     }

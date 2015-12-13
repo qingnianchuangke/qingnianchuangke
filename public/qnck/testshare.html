@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>分享测试</title>
+    <meta charset="utf-8" />
+    <script type='text/javascript' src='http://res.wx.qq.com/open/js/jweixin-1.0.0.js'></script>
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <script type="text/javascript">
+    var noncestr = "Wm3WZQCPz0wzccnW";
+    var timestamp = Math.round(new Date().getTime()/1000);
+    var appId = "wx0d02829c6679eff0";
+    var url = window.location.href;
+
+    $(document).ready(function () {
+        $.ajax({
+            type: "get",
+            url: _url + "wechat/sign",
+            data: {noncestr:noncestr,timestamp:timestamp,url:url},
+            dataType: "json",
+            success: function (r) {
+                if (r.result == "2000") {
+                    wx.config({
+                        debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+                        appId: appId, // 必填，公众号的唯一标识
+                        timestamp:timestamp , // 必填，生成签名的时间戳
+                        nonceStr: noncestr, // 必填，生成签名的随机串
+                        signature: r.data,// 必填，签名，见附录1
+                        jsApiList: [
+                            'onMenuShareQZone',//QQ控件
+                            'onMenuShareWeibo',//QQ微博
+                            'onMenuShareQQ',//QQ
+                            'onMenuShareTimeline',//朋友圈
+                            'onMenuShareAppMessage'//朋友
+                        ] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+                    });
+                }
+            },
+            error: function () {
+                alert("加载失败!");
+            }
+        });
+    });
+
+    function shareTo(){
+        wx.onMenuShareTimeline({
+            title: 'test', 
+            link: 'http://www.baidu.com/', 
+            imgUrl: 'https://ss2.baidu.com/6ONYsjip0QIZ8tyhnq/it/u=2906371901,3217496258&fm=58', 
+            success: function (errMsg) { 
+                alert(errMsg);
+                // 用户确认分享后执行的回调函数
+                alert("用户确认分享后执行的回调函数");
+            },
+            cancel: function (errMsg) { 
+                alert(errMsg);
+                // 用户取消分享后执行的回调函数
+                alert("用户取消分享后执行的回调函数");
+            },
+            fail: function (errMsg) {
+                alert(errMsg);
+                alert("用户分享失败后执行的回调函数");
+            },
+        });
+    }
+    </script>
+</head>
+<body>
+    <a href="javascript:void(0);" onclick="javascript:shareTo();" id="down_load">
+        点击分享到微信朋友圈
+    </a>
+</body>
+</html>

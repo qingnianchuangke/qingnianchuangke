@@ -7,7 +7,11 @@
 <meta name="renderer" content="webkit">
 <title>青年创客后台管理-登录</title>
 <link rel="stylesheet" href="css/pintuer.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="easyui/themes/icon.css">
 <script src="js/jquery-1.8.2.min.js"></script>
+<script type="text/javascript" src="easyui/jquery.min.js"></script>
+<script type="text/javascript" src="easyui/jquery.easyui.min.js"></script>
 <script type="text/javascript" src="js/common.js"></script>
 <script src="js/pintuer.js"></script>
 <style type="text/css" title="currentStyle" media="screen" mce_bogus="1">  
@@ -29,9 +33,20 @@
     .validate  
     {  
         color: Red;  
-    }  
+    } 
+    .panel-body{
+      border: 0px;
+    }
 </style>  
 <script>
+  document.onkeydown = function (event_e) {
+      if (window.event)
+          event_e = window.event;
+      var int_keycode = event_e.charCode || event_e.keyCode;
+      if (int_keycode == 13) {
+          btnLoginClick();
+      }
+  };
 	function btnLoginClick(){
 		$('#loginPanel').find('input').trigger("blur");
 		var numError = $('#loginPanel').find('.check-error').length;
@@ -39,6 +54,7 @@
 			$('#loginPanel').find('.check-error').first().find('input').first().focus().select();
 		}
 		else{
+      loding("登录中...");
       $.ajax({
           type: "post",
           url: _url+"office/login",
@@ -58,11 +74,13 @@
                   rolename = rolename.substr(0,rolename.length-1);
                 window.location.href='main.html?u='+escape(username)+'&r='+escape(rolename);
               }else{
-                  alert("登录失败!");
+                  $.messager.alert('提示', JSON.parse(r).info, 'info');
+                  closeLoing();
               }
           },
           error: function () {
-              alert("操作失败!");
+              $.messager.alert('提示', '与后台通讯失败，请联系管理员！', 'info');
+              closeLoing();
           }
       });
 		}

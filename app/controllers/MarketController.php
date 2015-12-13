@@ -2,39 +2,51 @@
 /**
 *
 */
+
+use Illuminate\Support\Collection;
+
 class MarketController extends \BaseController
 {
-    public function index()
+    public function hot()
     {
-        $site = Input::get('site', 0);
+        $city = Input::get('city', 0);
+        $province = Input::get('province', 0);
         $school = Input::get('school', 0);
         $key = Input::get('key', '');
-        $range = Input::get('range', 1);
+        $range = Input::get('range', 3);
         $u_id = Input::get('u_id');
         $is_follow = Input::get('is_follow', 0);
+        $cate = Input::get('cate', 0);
 
-        $page = Input::get('page', 0);
         $perPage = Input::get('per_page', 30);
+        $page = Input::get('page', 1);
 
         try {
             if (!$u_id) {
                 throw new Exception("请传入有效的用户id", 2001);
             }
+            $user = User::find($u_id);
+            $user->load('school');
+
             $query = PromotionInfo::with([
+                'city',
                 'school',
                 'booth' => function ($q) {
                     $q->with(['user']);
                 },
-                'praises' => function ($q) {
-                    $q->take(3);
-                },
                 'product' => function ($q) {
-                    $q->with(['promo', 'quantity']);
+                    $q->with([
+                        'promo',
+                        'quantity',
+                        'praises' => function ($qq) {
+                            $qq->where('praises.u_id', '=', $this->u_id);
+                        }]);
                 }]);
-            $query = $query->select('promotion_infos.*')->where('promotion_infos.p_range', '<=', $range);
+            $query = $query->select('promotion_infos.*');
             $query = $query->leftJoin('products', function ($q) {
                 $q->on('products.p_id', '=', 'promotion_infos.p_id')
-                ->where('products.p_status', '=', 1);
+                ->where('products.p_status', '=', 1)
+                ->where('products.p_type', '=', 1);
             })->leftJoin('booths', function ($q) {
                 $q->on('booths.b_id', '=', 'promotion_infos.b_id')
                 ->where('booths.b_status', '=', 1);
@@ -45,12 +57,19 @@ class MarketController extends \BaseController
                     $q->on('booths.b_id', '=', 'booth_follows.b_id')
                     ->where('booth_follows.u_id', '=', $u_id);
                 });
+                $school = 0;
+                $city = 0;
+                $range = 1;
             }
-            if ($school) {
+            $query = $query->where('promotion_infos.p_range', '<=', $range);
+            if ($school && $range == 3) {
                 $query = $query->where('promotion_infos.s_id', '=', $school);
             }
-            if ($site) {
-                $query = $query->where('promotion_infos.c_id', '=', $site);
+            if ($city && $province && $range == 2) {
+                $query = $query->where('promotion_infos.c_id', '=', $city)->where('promotion_infos.pv_id', '=', $province);
+            }
+            if ($cate) {
+                $query = $query->where('products.p_cate', '=', $cate);
             }
             if ($key) {
                 $query = $query->where(function ($q) use ($key) {
@@ -65,28 +84,164 @@ class MarketController extends \BaseController
             }
             $list = $query->orderBy('promotion_infos.created_at', 'DESC')->paginate($perPage);
             $data = [];
-            $promo_ids = [];
-            foreach ($list as $key => $product) {
-                $data[] = $product->showInListWithProduct();
-                $promo_ids[] = $product['p_id'];
-            }
-            if (!empty($promo_ids)) {
-                $praises = PromotionPraise::where('u_id', '=', $u_id)->whereIn('prom_id', $promo_ids)->lists('prom_id');
-            } else {
-                $praises = [];
-            }
-            foreach ($data as $key => $product) {
-                if (in_array($product['product']['id'], $praises)) {
-                    $chk = 1;
+            foreach ($list as $k => $product) {
+                $tmp = $product->showInListWithProduct();
+                if (!empty($product->product->praises)) {
+                    $tmp['is_praised'] = 1;
                 } else {
-                    $chk = 0;
+                    $tmp['is_praised'] = 0;
                 }
-                $product['is_praised'] = $chk;
-                $data[$key] = $product;
+                $tmp['item_type'] = 1;
+                $data[] = $tmp;
+            }
+            if (!$key) {
+                $ad = Advertisement::fetchAd(2, $school, $city, $province, $range);
+                if ($ad && $data) {
+                    $data = array_merge($data, $ad);
+                    $collection = new Collection($data);
+                    $data = array_values($collection->toArray());
+                } elseif ($ad && !$data && $page < 2) {
+                    $data = $ad;
+                }
             }
             $re = Tools::reTrue('获取首页商品成功', $data, $list);
         } catch (Exception $e) {
             $re = Tools::reFalse($e->getCode(), '获取首页商品失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function flea()
+    {
+        $city = Input::get('city', 0);
+        $province = Input::get('province', 0);
+        $school = Input::get('school', 0);
+        $key = Input::get('key', '');
+        $range = Input::get('range', 0);
+        $u_id = Input::get('u_id');
+        $is_follow = Input::get('is_follow', 0);
+        $cate = Input::get('cate', 0);
+
+        $filter_option = Input::get('filter_option', 0);        // 1-within 1 day, 2-within 3 days, 3-within 7 days
+
+        $perPage = Input::get('per_page', 30);
+        $page = Input::get('page', 1);
+
+        try {
+            if (!$school) {
+                $range = 2;
+            }
+            if (!$u_id) {
+                throw new Exception("请传入有效的用户id", 2001);
+            }
+            $user = User::find($u_id);
+            $user->load('school');
+
+            $query = Product::with([
+                'user',
+                'booth' => function ($q) {
+                    $q->with(['school']);
+                },
+                'quantity',
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                },
+                ]);
+            $query = $query->select('products.*')->where('products.p_status', '=', 1)->where('products.p_type', '=', 2);
+            $query = $query->leftJoin('booths', function ($q) {
+                $q->on('booths.b_id', '=', 'products.b_id');
+            });
+
+            if ($is_follow) {
+                $query = $query->rightJoin('booth_follows', function ($q) use ($u_id) {
+                    $q->on('booths.b_id', '=', 'booth_follows.b_id')
+                    ->where('booth_follows.u_id', '=', $u_id);
+                });
+                $school = 0;
+                $city = 0;
+                $range = 1;
+            }
+            if ($school && $range == 3) {
+                $query = $query->where('booths.s_id', '=', $school);
+            }
+            if ($city && $province && $range == 2) {
+                $query = $query->where('booths.c_id', '=', $city)->where('booths.pv_id', '=', $province);
+            }
+            if ($cate) {
+                $query = $query->where('products.p_cate', '=', $cate);
+            }
+            if ($key) {
+                $query = $query->where(function ($q) use ($key) {
+                    $q->where('booths.b_product_source', 'LIKE', '%'.$key.'%')
+                    ->orWhere('booths.b_product_category', 'LIKE', '%'.$key.'%')
+                    ->orWhere('booths.b_desc', 'LIKE', '%'.$key.'%')
+                    ->orWhere('booths.b_title', 'LIKE', '%'.$key.'%')
+                    ->orWhere('products.p_title', 'LIKE', '%'.$key.'%')
+                    ->orWhere('products.p_desc', 'LIKE', '%'.$key.'%');
+                });
+            }
+
+            if ($filter_option) {
+                if ($filter_option == 1) {
+                    $days = 1;
+                } elseif ($filter_option == 2) {
+                    $days = 3;
+                } else {
+                    $days = 7;
+                }
+                $now = Tools::getNow(false);
+                $now->modify('-'.$days.' days');
+                $date = $now->format('Y-m-d H:i:s');
+                $query = $query->where('products.active_at', '>', $date);
+            }
+
+            $list = $query->orderBy('products.created_at', 'DESC')->paginate($perPage);
+            $data = [];
+            $start = 0;
+            $end = 0;
+            foreach ($list as $k => $product) {
+                $tmp = $product->showInList();
+                if ($k == 0) {
+                    $start = $end = $tmp['created_at_timestamps'];
+                } else {
+                    $start = min($start, $tmp['created_at_timestamps']);
+                    $end = max($end, $tmp['created_at_timestamps']);
+                }
+                if (empty($tmp['booth']['school'])) {
+                    $tmp['school'] = [];
+                } else {
+                    $tmp['school'] = $tmp['booth']['school'];
+                }
+                if (empty($tmp['booth']['city'])) {
+                    $tmp['city'] = [];
+                } else {
+                    $tmp['city'] = $tmp['booth']['city'];
+                }
+                unset($tmp['booth']);
+                if (count($product->praises) > 0) {
+                    $tmp['is_praised'] = 1;
+                } else {
+                    $tmp['is_praised'] = 0;
+                }
+                $tmp['item_type'] = 1;
+                $data[] = $tmp;
+            }
+            if (!$key) {
+                $start = $start > 0 ? date('Y-m-d H:i:s', $start) : null;
+                $end = ($end > 0 && $page != 1) ? date('Y-m-d H:i:s', $end) : null;
+                if ($page == 1 && $list->getTotal() < $per_page) {
+                    $start = null;
+                }
+                $ad = Advertisement::fetchAd(3, $start, $end, $school, $city, $province, $range);
+                if ($ad && $data) {
+                    $data = Advertisement::mergeArray($data, $ad);
+                } elseif ($ad && !$data && $page < 2) {
+                    $data = $ad;
+                }
+            }
+            $re = Tools::reTrue('获取跳蚤市场商品成功', $data, $list);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '获取跳蚤市场商品失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -96,7 +251,6 @@ class MarketController extends \BaseController
         $school = Input::get('school', 0);
         $key = Input::get('key', '');
 
-        $page = Input::get('page', 0);
         $perPage = Input::get('per_page', 30);
 
         try {
@@ -127,16 +281,28 @@ class MarketController extends \BaseController
     public function maker()
     {
         $school = Input::get('school', 0);
+        $province = Input::get('province', 0);
+        $city = Input::get('city', 0);
+        $range = Input::get('range', 3);
         $key = Input::get('key', '');
+        $cate = Input::get('cate', 0);
+        $u_id = Input::get('u_id', 0);
 
-        $page = Input::get('page', 0);
         $perPage = Input::get('per_page', 30);
 
         try {
+            if (!$u_id) {
+                throw new Exception("需要传入用户ID", 7001);
+            }
             $query = Booth::where('b_type', '=', 2)->where('b_status', '=', 1)->with([
                 'user',
-                'products' => function ($q) {
-                    $q->take(5)->where('p_status', '=', 1)->orderBy('sort', 'DESC')->orderBy('created_at', 'DESC');
+                'school',
+                'city',
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                },
+                'favorites' => function ($q) {
+                    $q->where('favorites.u_id', '=', $this->u_id);
                 }
                 ]);
             if ($key) {
@@ -147,29 +313,30 @@ class MarketController extends \BaseController
                     ->orWhere('b_title', 'LIKE', '%'.$key.'%');
                 });
             }
-            if ($school) {
+
+            if ($school && $range == 3) {
                 $query = $query->where('s_id', '=', $school);
             }
+            if ($city && $province && $range == 2) {
+                $query = $query->where('c_id', '=', $city)->where('pv_id', '=', $province);
+            }
+            if ($cate) {
+                $query = $query->where('b_cate', '=', $cate);
+            }
+
             $list = $query->paginate($perPage);
             $data = [];
             foreach ($list as $key => $booth) {
-                $detail = $booth->showDetail();
-                $products = [];
-                if (!empty($booth->products)) {
-                    $tmp = [];
-                    foreach ($booth->products as $key => $product) {
-                        $tmp['id'] = $product->p_id;
-                        $imgArr = explode(',', $product->p_imgs);
-                        $img = '';
-                        if (!empty($imgArr)) {
-                            $img = array_pop($imgArr);
-                        }
-                        $tmp['img'] = $img;
-                        $products[] = $tmp;
-                    }
+                $tmp = $booth->showDetail();
+                $tmp['is_praised'] = 0;
+                $tmp['is_favorited'] = 0;
+                if (count($booth->praises) > 0) {
+                    $tmp['is_praised'] = 1;
                 }
-                $detail['prodcts'] = $products;
-                $data[] = $detail;
+                if (count($booth->favorites) > 0) {
+                    $tmp['is_favorited'] = 1;
+                }
+                $data[] = $tmp;
             }
             $re = Tools::reTrue('获取创的店成功', $data, $list);
         } catch (Exception $e) {
@@ -223,7 +390,15 @@ class MarketController extends \BaseController
             if ($booth->b_status != 1) {
                 throw new Exception("店铺当前不可用", 7001);
             }
-            $booth->load('user');
+            $booth->load([
+                'user',
+                'praises' => function ($q) {
+                    $q->where('praise.u_id', '=', $this->u_id);
+                },
+                'favorites' => function ($q) {
+                    $q->where('favorites.u_id', '=', $this->u_id);
+                }
+                ]);
             $boothInfo = $booth->showDetail();
             $products_count = Product::where('b_id', '=', $booth->b_id)->where('p_status', '=', 1)->count();
             $chk = BoothFollow::where('b_id', '=', $booth->b_id)->where('u_id', '=', $u_id)->first();
@@ -235,6 +410,14 @@ class MarketController extends \BaseController
 
             $boothInfo['prodct_count'] = (int)$products_count;
             $boothInfo['is_follow'] = $is_follow;
+            $boothInfo['is_praised'] = 0;
+            $boothInfo['is_favorited'] = 0;
+            if (count($booth->praises) > 0) {
+                $boothInfo['is_praised'] = 1;
+            }
+            if (count($booth->favorites) > 0) {
+                $boothInfo['is_favorited'] = 1;
+            }
             $data = ['booth' => $boothInfo];
             $re = Tools::reTrue('获取他的店铺成功', $data);
         } catch (Exception $e) {
@@ -248,7 +431,6 @@ class MarketController extends \BaseController
         $b_id = Input::get('booth', 0);
         $key = Input::get('key', '');
 
-        $page = Input::get('page', 0);
         $perPage = Input::get('per_page', 30);
 
         try {
@@ -444,6 +626,7 @@ class MarketController extends \BaseController
                 $cart->u_id = $u_id;
                 $cart->p_id = $p_id;
                 $cart->c_quantity = $quantity;
+                $cart->c_type = 1;
                 $cart->addCart();
             // cumilate quantity
             } else {
@@ -535,10 +718,10 @@ class MarketController extends \BaseController
             $list = Cart::whereIn('c_id', $carts)->get();
             $total_amount = 0;
             $total_amount_origin = 0;
-            $group['amount_origin'] = 0;
-            $group['amount'] = 0;
-            $group['carts_ids'] = [];
-            $group['b_ids'] = [];
+            $b_ids = [];
+            $amount_origin_sum = 0;
+            $amount_sum = 0;
+            $groups = [];
             foreach ($list as $key => $cart) {
                 if ($cart->u_id != $u_id) {
                     throw new Exception("没有权限操作该购物车", 7001);
@@ -547,37 +730,53 @@ class MarketController extends \BaseController
                     throw new Exception("购物车无效", 7005);
                 }
                 $cart->updateCart($cart->c_quantity);
-                $group['amount_origin'] += $cart->c_amount_origin;
-                $group['amount'] += $cart->c_amount;
-                $group['carts_ids'][] = $cart->c_id;
-                $group['b_ids'][] = $cart->b_id;
+                if (empty($groups[$cart->b_id]['amount_origin'])) {
+                    $groups[$cart->b_id]['amount_origin'] = 0;
+                    $groups[$cart->b_id]['amount'] = 0;
+                    $groups[$cart->b_id]['carts_ids'] = [];
+                }
+                $groups[$cart->b_id]['amount_origin'] += $cart->c_amount_origin;
+                $groups[$cart->b_id]['amount'] += $cart->c_amount;
+                $groups[$cart->b_id]['carts_ids'][] = $cart->c_id;
+                $b_ids[] = $cart->b_id;
+
+                $amount_sum += $groups[$cart->b_id]['amount'];
+                $amount_origin_sum += $groups[$cart->b_id]['amount_origin'];
             }
 
-            if (($group['amount_origin'] != $amount_origin) || ($group['amount'] != $amount)) {
+            if (($amount_origin_sum != $amount_origin) || ($amount_sum != $amount)) {
                 throw new Exception("支付金额已刷新, 请重新提交订单", 9003);
             }
-            $order_no = Order::generateOrderNo($u_id);
-            $order = new Order();
-            $order->u_id = $u_id;
-            $order->o_amount_origin = $group['amount_origin'];
-            $order->o_amount = $group['amount'];
-            $order->o_shipping_fee = $shipping_fee;
-            $order->o_shipping_name = $shipping_name;
-            $order->o_shipping_phone = $shipping_phone;
-            $order->o_shipping_address = $shipping_address;
-            $order->o_delivery_time = $delivery_time;
-            $order->o_shipping = $shipping;
-            $order->o_comment = $comment;
-            $order->o_number = $order_no;
-            $o_id = $order->addOrder();
-            // push msg to seller
-            $list = Booth::whereIn('b_id', $group['b_ids'])->get();
-            foreach ($list as $key => $booth) {
-                $msg = new PushMessage($booth->u_id);
-                $msg->pushMessage('您有新的订单, 请及时发货');
+
+            $order_group_no = Order::generateOrderGroupNo($u_id);
+            foreach ($groups as $b_id => $group) {
+                $rnd_str = rand(10, 99);
+                $order_no = $order_group_no.$b_id.$rnd_str;
+                $order = new Order();
+                $order->u_id = $u_id;
+                $order->b_id = $b_id;
+                $order->o_amount_origin = $group['amount_origin'];
+                $order->o_amount = $group['amount'];
+                $order->o_shipping_fee = $shipping_fee;
+                $order->o_shipping_name = $shipping_name;
+                $order->o_shipping_phone = $shipping_phone;
+                $order->o_shipping_address = $shipping_address;
+                $order->o_delivery_time = $delivery_time;
+                $order->o_shipping = $shipping;
+                $order->o_comment = $comment;
+                $order->o_number = $order_no;
+                $order->o_group_number = $order_group_no;
+                $o_id = $order->addOrder();
+                Cart::bindOrder([$order->o_id => $group['carts_ids']]);
             }
-            Cart::bindOrder([$order->o_id => $group['carts_ids']]);
-            $re = Tools::reTrue('提交订单成功', ['order_id' => $o_id, 'order_no' => $order_no]);
+
+            // push msg to seller
+            $list = Booth::whereIn('b_id', $b_ids)->get();
+            foreach ($list as $key => $booth) {
+                $obj = new MessageDispatcher($booth->u_id);
+                $obj->fireTextToUser('您有新的订单, 请及时发货');
+            }
+            $re = Tools::reTrue('提交订单成功', ['order_no' => $order_group_no]);
             DB::commit();
         } catch (Exception $e) {
             $re = Tools::reFalse($e->getCode(), $e->getMessage());
@@ -599,7 +798,7 @@ class MarketController extends \BaseController
 
         try {
             $user = User::find($u_id);
-            $user_contact = UsersContactPeople::find($u_id);
+            $user_contact = UserProfileBase::find($u_id);
             $query = BoothFollow::with(['follower', 'follower.school'])->where('b_id', '=', $id)->select('booth_follows.*')
             ->leftJoin('users', function ($q) {
                 $q->on('users.u_id', '=', 'booth_follows.u_id');
@@ -635,6 +834,27 @@ class MarketController extends \BaseController
         } catch (Exception $e) {
             $re = Tools::reFalse($e->getCode(), '获取粉丝失败:'.$e->getMessage());
         }
+        return Response::json($re);
+    }
+
+    public function getBoothCate()
+    {
+        $data = Product::getProductCate(1);
+        $re = Tools::reTrue('获取分类成功', $data);
+        return Response::json($re);
+    }
+
+    public function getProductCate()
+    {
+        $data = Product::getProductCate(1);
+        $re = Tools::reTrue('获取分类成功', $data);
+        return Response::json($re);
+    }
+
+    public function getFleaCate()
+    {
+        $data = Product::getProductCate(2);
+        $re = Tools::reTrue('获取分类成功', $data);
         return Response::json($re);
     }
 }

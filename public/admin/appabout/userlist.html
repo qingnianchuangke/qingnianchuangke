@@ -35,6 +35,14 @@ table.altrowstable td {
 }
 </style>
 <script>
+document.onkeydown = function (event_e) {
+  if (window.event)
+      event_e = window.event;
+  var int_keycode = event_e.charCode || event_e.keyCode;
+  if (int_keycode == 13) {
+      BindData();
+  }
+};
 //页面加载
 $(document).ready(function () {
 	BindData();
@@ -44,14 +52,21 @@ $(document).ready(function () {
 		}
 	});
 });
+function serchClick(){
+	BindData();
+}
 	//绑定数据
 	function BindData() {
+		var xm = $("#xm").val();
+		var xx = $("#xx").val();
+		var hassfz = $("#hassfz").val();
+		var hasxsz = $("#hasxsz").val();
 		var pageNumber = $("#tt").datagrid('getPager').data("pagination").options.pageNumber;
 		var pageSize = $("#tt").datagrid('getPager').data("pagination").options.pageSize;
 		$.ajax({
 			type: "get",
 			url: _url+'office/user/profile',
-			data: {page:pageNumber,per_page:pageSize},
+			data: {page:pageNumber,per_page:pageSize,s_name:xx,name:xm,has_id_img:hassfz,has_stu_img:hasxsz},
 			dataType: "text",
 			success: function (r) {	
 				var result = JSON.parse(r);
@@ -76,165 +91,60 @@ $(document).ready(function () {
 				break;
 		}
 	}
-	//绑定页面元素
-	function putDataToWindow(data) {
-		clearDetailWindowData();
-		putDetailToWindow(data.detail);
-		clearBankWindowData();
-		putBankToWindow(data.bank);
-		clearContactWindowData();
-		putContactToWindow(data.contact);
-	}
-	function clearDetailWindowData(){
-		$("#sfzhm").text("");
-		$("#sfzzp_zm").attr("src","");
-		$("#sfzzp_bm").attr("src","");
-		$("#jtzz").text("");
-		$("#fqxm").text("");
-		$("#fqdh").text("");
-		$("#mqxm").text("");
-		$("#mqdh").text("");
-			$("#detailOptTd").html("");
-	}
-	function putDetailToWindow(detail){
-		if(detail){
-			$("#sfzhm").text(detail.identity_number);
-			if(detail.identity_imgs!=null){
-				$("#sfzzp_zm").attr("src",detail.identity_imgs.identity_img_front);
-				$("#sfzzp_bm").attr("src",detail.identity_imgs.identity_img_back);
-			}
-			$("#jtzz").text(detail.home_adress);
-			$("#fqxm").text(detail.father_name);
-			$("#fqdh").text(detail.father_telephone);
-			$("#mqxm").text(detail.mother_name);
-			$("#mqdh").text(detail.mother_telephone);
-			if(detail.status=="1")
-				$("#detailOptTd").html("此项已审核通过");
-			else if(detail.status=="0"){
-				$("#detailOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('detail','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('detail','0')\">[审核不通过]</a>");
-			}
-			else if(detail.status=="2"){
-				$("#detailOptTd").html("审核不通过，原因【<span style='color:red;'>"+detail.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('detail','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('detail','0')\">[审核不通过]</a>");
-			}
-		}
-	}
-	function censor(type, opt, bankid){
-		var remark = "";
-		if(opt=="0")
-			remark = prompt("请输入审核不通过的原因：", ""); 
-        if(opt == "0" && remark==null){
-            return;
-        }
-        else if(opt == "0" && remark==""){
-            $.messager.alert("提示", "请输入审核不通过的原因!", "alert");
-            return;
-        }
-
-		var sdata = $("#tt").datagrid("getSelected");
-		if (sdata) {
-			var _id = sdata.id;
-			if(type=="bank")
-				_id = bankid;
-			$.ajax({
-				type: "put",
-				url: _url+'office/user/profile/'+_id+'/censor/'+type,
-				data: {check:opt,remark:remark},
-				dataType: "text",
-				success: function (r) {
-					var result = JSON.parse(r);
-					alert(result.info);
-					if(result.result =="2000"){
-						//审核成功
-						var tdid = type+"OptTd";
-						if(opt=="1")
-							$("#"+tdid).html("此项已审核通过");
-						else
-							$("#"+tdid).html("审核不通过，原因【<span style='color:red;'>"+remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('"+type+"','1','"+_id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('"+type+"','0','"+_id+"')\">[审核不通过]</a>");
-					}
-				},
-				error: function () {
-					alert("操作失败!");
-				}
-			});
-		} else {
-			$.messager.alert("提示", "获取选中的用户信息失败！", "alert");
-		}
-	}
-	function clearBankWindowData(){
-		$("#khh").text("");
-		$("#kh").text("");
-		$("#hzxm").text("");
-		$("#hzdh").text("");
-		$("#hzsfz").text("");
-		$("#bankOptTd").html("");
-	}
-	function putBankToWindow(bank){
-		$("#khh").text(bank.card_number);
-		if(bank.bank !=null)
-			$("#kh").text(bank.bank.name);
-		$("#hzxm").text(bank.holder_name);
-		$("#hzdh").text(bank.holder_phone);
-		$("#hzsfz").text(bank.holder_identity_number);
-		if(bank.status=="1")
-			$("#bankOptTd").html("此项已审核通过");
-		else if(bank.status=="0"){
-			$("#bankOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('bank','1','"+bank.id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('bank','0','"+bank.id+"')\">[审核不通过]</a>");
-		}
-		else if(bank.status=="2"){
-			$("#bankOptTd").html("审核不通过，原因【<span style='color:red;'>"+bank.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('bank','1','"+bank.id+"')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('bank','0','"+bank.id+"')\">[审核不通过]</a>");
-		}
-	}
-	function clearContactWindowData(){
-		$("#xxmc").text("");
-		$("#xh").text("");
-		$("#xszzp").attr("src","");
-		$("#zy").text("");
-		$("#xl").text("");
-		$("#rxnf").text("");
-		$("#fdyxm").text("");
-		$("#fdydh").text("");
-		$("#hyxm1").text("");
-		$("#hydh1").text("");
-		$("#hyxm2").text("");
-		$("#hydh2").text("");
-		$("#contactOptTd").html("");
-	}
-	function putContactToWindow(contact){
-		if(contact.school!=null)
-			$("#xxmc").text(contact.school.school_name);
-		$("#xh").text(contact.student_number);
-		if(contact.student_img!=null)
-			$("#xszzp").attr("src",contact.student_img.identity_img_front);
-		$("#zy").text(contact.profession);
-		$("#xl").text(contact.degree);
-		$("#rxnf").text(contact.entry_year);
-		$("#fdyxm").text(contact.teacher_name);
-		$("#fdydh").text(contact.teacher_phone);
-		$("#hyxm1").text(contact.frend_name1);
-		$("#hydh1").text(contact.frend_telephone1);
-		$("#hyxm2").text(contact.frend_name2);
-		$("#hydh2").text(contact.frend_telephone2);
-		if(contact.status=="1")
-			$("#contactOptTd").html("此项已审核通过");
-		else if(contact.status=="0"){
-			$("#contactOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('contact','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('contact','0')\">[审核不通过]</a>");
-		}
-		else if(contact.status=="2"){
-			$("#contactOptTd").html("审核不通过，原因【<span style='color:red;'>"+contact.remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('contact','1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('contact','0')\">[审核不通过]</a>");
-		}
-	}
 	function formatStatus(value, row){
-		if(row.detail_status=="1" && row.contact_status=="1" && row.bank_status=="1")
-			return "已通过审核";
-		else if(row.detail_status=="1" || row.contact_status=="1" || row.bank_status=="1")
-			return "部分通过审核";
+		if(row.u_status=="1")
+		{
+			if(row.base_status==null || row.base_status=="0")
+				return "未审核";
+			else if(row.base_status=="1")
+				return "已通过审核";
+			else
+				return "未通过审核";
+		}else{
+			return "已禁用";
+		}
+	}
+	function formatOpt(value, row,index){
+		var result = "";
+		if(row.u_status=="1")
+			result = '<a class="alink-edit" onclick="changeStatus(\'0\',\'禁用\',\''+row.id+'\')" href="#">[禁用]</a>';
 		else
-			return "未通过审核";
+			result = '<a class="alink-edit" onclick="changeStatus(\'1\',\'启用\',\''+row.id+'\')" href="#">[启用]</a>';
+		return result + "&nbsp;&nbsp;<a class='alink-edit' style='color:blue' href='#' onclick='viewDetail("+row.id+","+index+")'>[查看明细]</a>";
 	}
-	function formatOpt(value, row){
-		return "<a class='alink-edit' style='color:blue' href='#' onclick='viewDetail("+row.id+")'>[查看明细]</a>";
+	function changeStatus(ty,msg,id){
+		$.messager.confirm("提示", "确认"+msg+"选中的用户！", function (r) {
+	        if (r) {
+	            var remark="";
+	            remark = prompt("请输入"+msg+"选中用户的原因：", ""); 
+	            if(ty=="0"&&remark==null){
+	                return;
+	            }
+	            else if(ty=="0"&&remark==""){
+	                $.messager.alert("提示", "请输入禁用选中用户的原因!", "alert");
+	                return;
+	            }
+	            $.ajax({
+	                type: "put",
+	                url: _url+'office/user/'+id+"/enable",
+	                data: {status:ty,remark:remark},
+	                dataType: "text",
+	                success: function (r) {
+	                    var result = JSON.parse(r);
+	                    alert(result.info);
+	                    if(result.result=="2000"){
+	                        BindData();
+	                    }
+	                },
+	                error: function () {
+	                    alert("操作失败!");
+	                }
+	            });
+	        }
+	    });
 	}
-	function viewDetail(id){
+	function viewDetail(id,index){
+	    $("#tt").datagrid("selectRow",index);
 		$.ajax({
 			type: "get",
 			url: _url+'office/user/profile/'+id,
@@ -251,9 +161,239 @@ $(document).ready(function () {
 				}
 			},
 			error: function () {
-				alert("加载失败!");
+				$.messager.alert("提示", "与服务器通讯失败，请联系管理员！" , "alert");
 			}
 		});
+	}
+	function identity_rz(opt){
+		var sdata = $("#tt").datagrid("getSelected");
+		if (sdata) {
+			var _id = sdata.id;
+			$.ajax({
+				type: "put",
+				url: _url+'office/user/profile/'+_id+'/censor/identity',
+				data: {check:opt},
+				dataType: "text",
+				success: function (r) {
+					var result = JSON.parse(r);
+					if(result.result =="2000"){
+						//审核成功
+						if(opt=="1")
+							$("#sfrzOptTd").html("已通过认证");
+						else
+							$("#sfrzOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"identity_rz(1)\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"identity_rz(0)\">[认证不通过]</a>");
+					}
+				},
+				error: function () {
+					$.messager.alert("提示", "与服务器通讯失败，请联系管理员！" , "alert");
+				}
+			});
+		}
+	}
+	function student_rz(opt){
+		var sdata = $("#tt").datagrid("getSelected");
+		if (sdata) {
+			var _id = sdata.id;
+			$.ajax({
+				type: "put",
+				url: _url+'office/user/profile/'+_id+'/censor/student',
+				data: {check:opt},
+				dataType: "text",
+				success: function (r) {
+					var result = JSON.parse(r);
+					if(result.result =="2000"){
+						//审核成功
+						if(opt=="1")
+							$("#xszOptTd").html("已通过认证");
+						else
+							$("#xszOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;</span>&nbsp;&nbsp;</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"student_rz(1)\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"student_rz(0)\">[认证不通过]</a>");
+					}
+				},
+				error: function () {
+					$.messager.alert("提示", "与服务器通讯失败，请联系管理员！" , "alert");
+				}
+			});
+		}
+	}
+	function putDataToWindow(data) {
+		clearWindowData();
+		var sdata = $("#tt").datagrid("getSelected");
+		$("#username").text(sdata.u_name);//姓名
+		if(data.base){
+			$("#sfzhm").text(data.base.identity_number);//身份证号码
+			if(data.base.identity_img){
+				$("#sfzzp_zm").attr("src",data.base.identity_img.identity_img_front);//身份证正面照片
+				$("#sfzzp_bm").attr("src",data.base.identity_img.identity_img_back);//身份证背面照片
+			}
+			var identity_verified = data.base.identity_verified;
+			if(identity_verified=="0" || identity_verified == null)
+				$("#sfrzOptTd").html("<a href=\"javascript:void(0)\" onclick=\"identity_rz('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"identity_rz('0')\">[认证不通过]</a>");//身份认证操作
+			else if(identity_verified=="1")
+				$("#sfrzOptTd").html("已通过认证");//身份认证操作
+			else
+				$("#sfrzOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"identity_rz('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"identity_rz('0')\">[认证不通过]</a>");//身份认证操作
+			$("#xszhm").text(data.base.student_number);//学生证号码
+			if(data.base.student_img)
+				$("#xszzp_zp").attr("src",data.base.student_img.student_img_front);//学生证照片
+			var student_verified = data.base.student_verified;
+			if(student_verified=="0"|| student_verified == null)
+				$("#xszOptTd").html("<a href=\"javascript:void(0)\" onclick=\"student_rz('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"student_rz('0')\">[认证不通过]</a>");//学生证认证操作
+			else if(student_verified=="1")
+				$("#xszOptTd").html("已通过认证");//学生证认证操作
+			else
+				$("#xszOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"student_rz('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"student_rz('0')\">[认证不通过]</a>");//学生证认证操作
+			if(data.base.school)
+				$("#schoolname").text(data.base.school.school_name);//学校
+			$("#apartment").text(data.base.apartment);//宿舍
+			$("#entry_year").text(data.base.entry_year);//入学年份
+			$("#major").text(data.base.major);//专业
+			$("#emergency_name").text(data.base.emergency_name);//紧急联系人
+			$("#emergency_phone").text(data.base.emergency_phone);//紧急联系人电话号码
+			if(data.base.status=="0")
+				$("#detailOptTd").html("<a href=\"javascript:void(0)\" onclick=\"censor('1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('0')\">[审核不通过]</a>");
+			else if(data.base.status=="1"){
+				$("#detailOptTd").html("已通过审核");
+			}
+			else {
+				$("#detailOptTd").html("<span style=\"color:red\">上次审核：未通过审核</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"censor('1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('0')\">[审核不通过]</a>");
+			}
+			$("#jtzz").text(data.base.home_adress);//家庭住址
+			$("#fqxm").text(data.base.father_name);//父亲姓名
+			$("#fqdh").text(data.base.father_telephone);//父亲电话
+			$("#mqxm").text(data.base.mother_name);//母亲姓名
+			$("#mqdh").text(data.base.mother_telephone);//母亲电话
+		}
+		if(data.bank){
+			$("#khh").text(data.bank.bank.name);//开户行
+			$("#yhkh").text(data.bank.card_number);//银行卡号
+			$("#hzxm").text(data.bank.holder_name);//户主姓名
+		}
+		if(data.club){
+			$("#stmc").text(data.club.title);
+			$("#stjj").text(data.club.brief);
+			if(data.club.imgs)
+				$("#stzl").attr("src",data.club.imgs.club_proof_img);
+			if(data.club.status=="0")
+				$("#detailOptTd").html("<a href=\"javascript:void(0)\" onclick=\"strz_click('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"strz_click('0')\">[认证不通过]</a>");
+			else if(data.base.status=="1"){
+				$("#detailOptTd").html("已通过认证");
+			}
+			else {
+				$("#detailOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"strz_click('1')\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"strz_click('0')\">[认证不通过]</a>");
+			}
+		}
+	}
+	function strz_click(opt){
+		var sdata = $("#tt").datagrid("getSelected");
+		if (sdata) {
+			var _id = sdata.id;
+			$.ajax({
+				type: "put",
+				url: _url+'office/user/profile/'+_id+'/censor/club',
+				data: {check:opt},
+				dataType: "json",
+				success: function (result) {
+					if(result.result =="2000"){
+						//审核成功
+						if(opt=="1")
+							$("#xszOptTd").html("已通过认证");
+						else
+							$("#xszOptTd").html("<span style=\"color:red\">上次认证：未通过认证</span>&nbsp;&nbsp;</span>&nbsp;&nbsp;</span>&nbsp;&nbsp;<a href=\"javascript:void(0)\" onclick=\"strz_click(1)\">[认证通过]</a> <a href=\"javascript:void(0)\" onclick=\"strz_click(0)\">[认证不通过]</a>");
+					}
+				},
+				error: function () {
+					$.messager.alert("提示", "与服务器通讯失败，请联系管理员！" , "alert");
+				}
+			});
+		}
+	}
+	function censor(opt){
+		var remark = "";
+		if(opt=="0")
+			remark = prompt("请输入审核不通过的原因：", ""); 
+        if(opt == "0" && remark==null){
+            return;
+        }
+        else if(opt == "0" && remark==""){
+            $.messager.alert("提示", "请输入审核不通过的原因!", "alert");
+            return;
+        }
+
+		var sdata = $("#tt").datagrid("getSelected");
+		if (sdata) {
+			var _id = sdata.id;
+			$.ajax({
+				type: "put",
+				url: _url+'office/user/profile/'+_id+'/censor/base',
+				data: {check:opt,remark:remark},
+				dataType: "text",
+				success: function (r) {
+					var result = JSON.parse(r);
+            		$.messager.alert("提示", result.info, "alert");
+					if(result.result =="2000"){
+						//审核成功
+						if(opt=="1")
+							$("#detailOptTd").html("已审核通过");
+						else
+							$("#detailOptTd").html("上一次审核不通过，原因【<span style='color:red;'>"+remark+"</span>】;<br>重新审核：<a href=\"javascript:void(0)\" onclick=\"censor('1')\">[审核通过]</a> <a href=\"javascript:void(0)\" onclick=\"censor('0')\">[审核不通过]</a>");
+					}
+				},
+				error: function () {
+					alert("操作失败!");
+				}
+			});
+		} else {
+			$.messager.alert("提示", "获取选中的用户信息失败！", "alert");
+		}
+	}
+	function clearWindowData(){
+		$("#username").text("");//姓名
+		$("#sfzhm").text("");//身份证号码
+		$("#sfzzp_zm").attr("src","");//身份证正面照片
+		$("#sfzzp_bm").attr("src","");//身份证背面照片
+		$("#sfrzOptTd").html("");//身份认证操作
+		$("#xszhm").text("");//学生证号码
+		$("#xszzp_zp").text("");//学生证照片
+		$("#xszOptTd").html("");//学生证认证操作
+		$("#schoolname").text("");//学校
+		$("#apartment").text("");//宿舍
+		$("#entry_year").text("");//入学年份
+		$("#major").text("");//专业
+		$("#emergency_name").text("");//紧急联系人
+		$("#emergency_phone").text("");//紧急联系人电话号码
+		$("#detailOptTd").html("");//紧急联系人电话号码
+		$("#jtzz").text("");//家庭住址
+		$("#fqxm").text("");//父亲姓名
+		$("#fqdh").text("");//父亲电话
+		$("#mqxm").text("");//母亲姓名
+		$("#mqdh").text("");//母亲电话
+		$("#khh").text("");//开户行
+		$("#yhkh").text("");//银行卡号
+		$("#hzxm").text("");//户主姓名
+		$("#stmc").text("");
+		$("#stjj").text("");
+		$("#stzl").attr("src","");
+		$("#strzOptTd").html("");
+	}
+	function formatSfzxx(value,row){
+		if(value=="1")
+			return "有";
+		else
+			return "";
+	}
+	function formatRzzt(value,row){
+		if(value=="0")
+			return "未认证";
+		else if(value=="1")
+			return "已认证";
+		else
+			return "";
+	}
+	function formatUremark(value,row){
+		if(row.u_status=="-1")
+			return value;
+		else
+			return "";
 	}
 </script>
 </head>
@@ -264,22 +404,47 @@ $(document).ready(function () {
             fit:true,
             singleSelect:true,
             pagination:true,
-            pageSize:10,
+            pageSize:20,
             idField:'id',
             toolbar:'#menuTollbar'">
     <thead>
         <tr>
-            <th data-options="field:'id',width:120,align:'left',halign:'center',sortable:true">id</th>
-            <th data-options="field:'u_mobile',width:120,align:'left',halign:'center',sortable:true">手机号码</th>
-            <th data-options="field:'u_name',width:80,align:'left',halign:'center',sortable:true">姓名</th>
-            <th data-options="field:'t_name',width:200,align:'left',halign:'center',sortable:true">学校</th>
-            <th data-options="field:'status',width:80,align:'left',halign:'center',sortable:true,formatter:formatStatus">状态</th>
-            <th data-options="field:'options',width:100,align:'center',halign:'center',sortable:true,formatter:formatOpt">操作</th>
+            <th data-options="field:'id',width:50,align:'left',halign:'center'">id</th>
+            <th data-options="field:'u_mobile',width:80,align:'left',halign:'center'">手机号码</th>
+            <th data-options="field:'u_nickname',width:100,align:'left',halign:'center'">昵称</th>
+            <th data-options="field:'u_name',width:100,align:'left',halign:'center'">姓名</th>
+            <th data-options="field:'t_name',width:200,align:'left',halign:'center'">学校</th>
+            <th data-options="field:'has_id_img',width:100,align:'center',halign:'center',formatter:formatSfzxx">身份证认证数据</th>
+            <th data-options="field:'id_verified',width:100,align:'center',halign:'center',formatter:formatRzzt">身份证认证状态</th>
+            <th data-options="field:'has_student_img',width:100,align:'center',halign:'center',formatter:formatSfzxx">学生证认证数据</th>
+            <th data-options="field:'stu_verified',width:100,align:'center',halign:'center',formatter:formatRzzt">学生证认证状态</th>
+            <th data-options="field:'status',width:80,align:'left',halign:'center',formatter:formatStatus">审核状态</th>
+            <th data-options="field:'u_remark',width:100,align:'left',halign:'center',formatter:formatUremark">禁用原因</th>
+            <th data-options="field:'options',width:140,align:'center',halign:'center',formatter:formatOpt">操作</th>
         </tr>
     </thead>
 </table>
 <div id="menuTollbar" style="height: auto;">
-    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="BindData();">刷新</a>
+    <a href="#" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-reload'" onclick="BindData();" >刷新</a>
+    <div style="padding:5px;border-top:1px solid gray;">
+    	<span>姓名或昵称：</span>
+    	<input style="width:80px" id="xm"/>
+    	<span style="padding-left:10px;">学校：</span>
+    	<input style="width:80px" id="xx"/>
+    	<span style="padding-left:10px;">已上传身份证信息：</span>
+    	<select id="hassfz">
+    		<option value="-1">全部</option>
+    		<option value="1">是</option>
+    		<option value="0">否</option>
+    	</select>
+    	<span style="padding-left:10px;">已上传学生证信息：</span>
+    	<select id="hasxsz">
+    		<option value="-1">全部</option>
+    		<option value="1">是</option>
+    		<option value="0">否</option>
+    	</select>
+    	<button type="button" onclick="serchClick()">Click Me To Search</button>
+    </div>
 </div>
 
 <div id="userdetail-dlg" class="easyui-dialog" title="用户明细" style="width: 800px; height: 430px; padding: 5px"
@@ -290,17 +455,81 @@ $(document).ready(function () {
         buttons: '#userdetail-dlg-buttons'
     ">
     <div class="easyui-tabs" style="width:776px;height:348px">
-        <div id="jbxxTab" title="基本信息" style="padding:10px">
+        <div id="sfrzTab" title="身份认证" style="padding:10px">
             <table class="altrowstable">
+				<tr>
+					<td class="leftTd">姓名</td><td class="rightTd"><span id="username"></span></td>
+				</tr>
 				<tr>
 					<td class="leftTd">身份证号码</td><td class="rightTd"><span id="sfzhm"></span></td>
 				</tr>
 				<tr>
-					<td class="leftTd">身份证照片-正面</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="sfzzp_zm"/></td>
+					<td class="leftTd">身份证照片-正面</td><td class="rightTd"><img src="" style="width:200px;height:100px" onclick="javascript:window.open($(this).attr('src'));" id="sfzzp_zm"/></td>
 				</tr>
 				<tr>
-					<td class="leftTd">身份证照片-背面</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="sfzzp_bm"/></td>
+					<td class="leftTd">身份证照片-背面</td><td class="rightTd"><img src="" style="width:200px;height:100px" onclick="javascript:window.open($(this).attr('src'));" id="sfzzp_bm"/></td>
 				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="sfrzOptTd"></td>
+				</tr>
+			</table>
+        </div>
+        <div id="xszTab" title="学生证认证" style="padding:10px">
+            <table class="altrowstable">
+				<tr>
+					<td class="leftTd">学生证号码</td><td class="rightTd"><span id="xszhm"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">身份证照片</td><td class="rightTd"><img src="" style="width:200px;height:100px" onclick="javascript:window.open($(this).attr('src'));" id="xszzp_zp"/></td>
+				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="xszOptTd"></td>
+				</tr>
+			</table>
+        </div>
+        <div id="strzTab" title="社团认证" style="padding:10px">
+            <table class="altrowstable">
+				<tr>
+					<td class="leftTd">社团名称</td><td class="rightTd"><span id="stmc"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">社团简介</td><td class="rightTd"><span id="stjj"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">社团资料</td><td class="rightTd"><img src="" style="width:200px;height:100px" onclick="javascript:window.open($(this).attr('src'));" id="stzl"/></td>
+				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="strzOptTd"></td>
+				</tr>
+			</table>
+        </div>
+        <div id="jbxxTab" title="基本信息" style="padding:10px">
+            <table class="altrowstable">
+				<tr>
+					<td class="leftTd">学校</td><td class="rightTd"><span id="schoolname"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">宿舍</td><td class="rightTd"><span id="apartment"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">入学年份</td><td class="rightTd"><span id="entry_year"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">专业</td><td class="rightTd"><span id="major"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">紧急联系人</td><td class="rightTd"><span id="emergency_name"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">紧急联系人电话</td><td class="rightTd"><span id="emergency_phone"></span></td>
+				</tr>
+				<tr>
+					<td class="leftTd">操作</td><td class="rightTd" id="detailOptTd"></td>
+				</tr>
+			</table>
+        </div>
+        <div id="jbxxTab" title="家庭信息" style="padding:10px">
+            <table class="altrowstable">
 				<tr>
 					<td class="leftTd">家庭住址</td><td class="rightTd"><span id="jtzz"></span></td>
 				</tr>
@@ -316,73 +545,18 @@ $(document).ready(function () {
 				<tr>
 					<td class="leftTd">母亲电话</td><td class="rightTd"><span id="mqdh"></span></td>
 				</tr>
-				<tr>
-					<td class="leftTd">操作</td><td class="rightTd" id="detailOptTd"></td>
-				</tr>
 			</table>
         </div>
         <div id="yhkTab" title="银行卡信息" style="padding:10px">
-			<table class="altrowstable">
+            <table class="altrowstable">
 				<tr>
 					<td class="leftTd">开户行</td><td class="rightTd"><span id="khh"></span></td>
 				</tr>
 				<tr>
-					<td class="leftTd">卡号</td><td class="rightTd"><span id="kh"></span></td>
+					<td class="leftTd">银行卡号</td><td class="rightTd"><span id="yhkh"></span></td>
 				</tr>
 				<tr>
 					<td class="leftTd">户主姓名</td><td class="rightTd"><span id="hzxm"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">户主电话</td><td class="rightTd"><span id="hzdh"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">户主身份证</td><td class="rightTd"><span id="hzsfz"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">操作</td><td class="rightTd" id="bankOptTd"></td>
-				</tr>
-			</table>
-        </div>
-        <div id="lxrTab" title="联系人信息" style="padding:10px">
-            <table class="altrowstable">
-				<tr>
-					<td class="leftTd">学校名称</td><td class="rightTd"><span id="xxmc"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">学号</td><td class="rightTd"><span id="xh"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">学生证照片</td><td class="rightTd"><img src="" style="width:200px;height:100px" id="xszzp"/></td>
-				</tr>
-				<tr>
-					<td class="leftTd">专业</td><td class="rightTd"><span id="zy"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">学历</td><td class="rightTd"><span id="xl"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">入学年份</td><td class="rightTd"><span id="rxnf"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">辅导员姓名</td><td class="rightTd"><span id="fdyxm"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">辅导员电话</td><td class="rightTd"><span id="fdydh"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">好友1姓名</td><td class="rightTd"><span id="hyxm1"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">好友1电话</td><td class="rightTd"><span id="hydh1"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">好友2姓名</td><td class="rightTd"><span id="hyxm2"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">好友2电话</td><td class="rightTd"><span id="hydh2"></span></td>
-				</tr>
-				<tr>
-					<td class="leftTd">操作</td><td class="rightTd" id="contactOptTd"></td>
 				</tr>
 			</table>
         </div>

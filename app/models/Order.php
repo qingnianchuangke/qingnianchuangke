@@ -48,7 +48,6 @@ class Order extends Eloquent
         $data['id'] = $this->o_id;
         $data['amount_origin'] = $this->o_amount_origin;
         $data['amount'] = $this->o_amount;
-        $data['amount_paied'] = $this->o_amount_paied;
         $data['created_at'] = $this->created_at->format('Y-m-d H:i:s');
         $data['number'] = $this->o_number;
         $data['shipping_address'] = $this->o_shipping_address;
@@ -124,7 +123,7 @@ class Order extends Eloquent
         return $this->o_id;
     }
 
-    public static function generateOrderNo($u_id)
+    public static function generateOrderGroupNo($u_id)
     {
         $order_no = Tools::generateDateUserRandomNo($u_id);
         $chk = Order::where('o_number', '=', $order_no)->first();
@@ -150,7 +149,7 @@ class Order extends Eloquent
         return $re;
     }
 
-    public function pay($amount, $payment_type)
+    public function pay($payment_type)
     {
         if ($this->o_status >= 2) {
             return true;
@@ -158,7 +157,6 @@ class Order extends Eloquent
         $now = new DateTime();
         $this->o_status = 2;
         $this->paied_at = $now->format('Y-m-d H:i:s');
-        $this->o_amount_paied = $amount;
         $this->o_payment = $payment_type;
         if (!$this->save()) {
             throw new Exception("结算订单失败", 9004);
@@ -168,7 +166,12 @@ class Order extends Eloquent
 
     public function getSummary()
     {
-        $this->_carts = Cart::where('o_id', '=', $this->o_id)->get();
+        $this->_carts = Cart::select('carts.*')->join('orders', function ($q) {
+            $q->on('carts.o_id', '=', 'orders.o_id')
+            ->where('orders.o_group_number', '=', $this->o_group_number);
+        })
+        ->where('carts.c_status', '<>', -1)
+        ->get();
         foreach ($this->_carts as $key => $cart) {
             if (empty($this->_bills[$cart->b_id])) {
                 if ($cart->c_status == 3) {
@@ -235,7 +238,7 @@ class Order extends Eloquent
 
     public static function sumIncome($to = null, $from = null, $b_id = null, $u_id = null, $owner_id = null)
     {
-        $query = Order::sum('o_amount_paied');
+        $query = Order::sum('o_amount');
         if ($from) {
             $query = $query->where('created_at', '>', $from);
         }
@@ -245,6 +248,15 @@ class Order extends Eloquent
         if ($b_id) {
             $query = $query->where('b_id', '=', $b_id);
         }
+    }
+
+    public static function getGroupOrdersByNo($group_no)
+    {
+        $orders = Order::where('o_group_number', '=', $group_no)->get();
+        if (count($orders) == 0) {
+            throw new Exception("没有找到订单", 9002);
+        }
+        return $orders;
     }
 
     public static function getOrderByNo($no)

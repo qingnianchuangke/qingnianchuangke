@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/schoolyard_ZC.css" media="screen">
+    <link rel="stylesheet" href="../css/jquery-ui.css" media="screen">
+    <style type="text/css">
+        .ui-timepicker-div .ui-widget-header { margin-bottom: 8px; }
+        .ui-timepicker-div dl { text-align: left; }
+        .ui-timepicker-div dl dt { float: left; clear:left; padding: 0 0 0 5px; }
+        .ui-timepicker-div dl dd { margin: 0 10px 10px 45%; }
+        .ui-timepicker-div td { font-size: 90%; }
+        .ui-tpicker-grid-label { background: none; border: none; margin: 0; padding: 0; }
+        .ui-timepicker-rtl{ direction: rtl; }
+        .ui-timepicker-rtl dl { text-align: right; padding: 0 5px 0 0; }
+        .ui-timepicker-rtl dl dt{ float: right; clear: right; }
+        .ui-timepicker-rtl dl dd { margin: 0 45% 10px 10px; }
+        .sub-nav{border-bottom:1px solid #e6e6e6;overflow: hidden;font-size:16px;font-family:"microsoft yahei";padding-top:6px;}
+        .sub-nav li{float:left;display:inline;margin-right:30px;}
+        .sub-nav a{color:#333;display:inline-block;height:30px;}
+        .sub-nav .cur a,.sub-nav a:hover{color:#007bc9;border-bottom:3px solid #007bc9;height:28px;text-decoration:none;_position:relative;_margin-bottom:-6px;}
+        .sub-nav .link{color: #0085da;font-style: italic;}
+        .text-box{    border: 1px solid #7bc2ee;height: 2rem;line-height: 2rem ;margin: 0.5rem 1rem 0rem 1rem;padding-left: 0.1rem;font-size: 0.8rem;}
+    </style>
+</head>
+<script src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        /* 图片8:5显示 */
+        $('.audit_Crowdfunding img').each(function(){
+            var w=$(this).width();//获取图片宽度
+            var h=$(this).height()*5/8;
+            $(this).attr({width:w,height:h});
+        });
+    });
+</script>
+<body>
+<div class="schoolyard_header">
+    <div class="schoolyard_header_r">
+        <img class="add_2" src="../images/add.jpg" alt=""/>
+        <ul>
+            <li class="new_">发布新的众筹</li>
+            <li  id="li5">已失败的众筹</li>
+            <li  id="li4">已成功的众筹</li>
+            <li  id="li3">进行中的众筹</li>
+            <li  id="li2">预发布的众筹</li>
+            <li  id="li7">审核失败的众筹</li>
+            <li  id="li6" class="schoolyard_liactive">审核中的众筹</li>
+
+        </ul>
+    </div>
+</div>
+<!--发布众筹-->
+<div class="schoolyard_main" style="display: none">
+    <label>为保障用户体验，青年创平台严禁恶意营销以及诱导分享朋友圈，严禁发布色情低俗、暴力血腥、政治谣言等各类违反法律法规及相关政府规定的信息。一旦发现，我们将严厉打击和处理。发布前请认证阅读青年创众筹相关服务协议。</label>
+   <div class="schoolyard_content">
+        <div class="ZC_name">
+            <span>众筹名称</span>
+            <input type="text" placeholder="请输入发布众筹的名称"/>
+        </div>
+
+       <div class="schoolyard_main_top">
+           <img src="../images/sc_img.jpg" id="add_testimg"  />
+           <div class="shouye_add">
+               <span>添加首页图片</span>
+               <div class="shouye_addImg">
+                   <img class="main_top_addimg" src="../images/add_img.jpg" alt="" onclick="topaddImg()"/>
+                   <div id="add_imgUpload">
+                       <img id="imgUpload" src="" alt=""/>
+                   </div>
+                   <input type="file" id="add_test" style="display: none"/>
+               </div>
+             </div>
+       </div>
+
+
+       <div class="ZC_introduce" >
+           <span>众筹介绍</span>
+           <textarea name="" id="textarea" cols="10" rows="5">请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称</textarea>
+       </div>
+       <div class="ZC_type" >
+           <span class="ZC_type_leix">众筹类型</span>
+           <ul>
+               <label class="ZC_type_xz">请选择</label>
+               <li class="ZC_active">生活百事</li>
+               <li>艺术创作</li>
+               <li>娱乐活动</li>
+               <li>设计发明</li>
+               <li>科学研究</li>
+               <li>爱心公益</li>
+           </ul>
+       </div>
+       <div  class="ZC_money" >
+           <span class="zc_span1">众筹金额</span>
+           <input class="money1" type="text" placeholder="请输入金额,如10.1" />
+           <span class="zc_span2">众筹份数</span>
+           <input class="money2" type="text" placeholder="请输入份数"/>
+           <span class="zc_span3">众筹总额</span>
+           <input class="money3" type="text" placeholder="请输入总额,如100.1"/>
+       </div>
+       <div class="ZC_date" >
+           <span class="ZC_date_span1">众筹天数</span>
+           <input class="ZC_date_1" id="ZC_date_1" type="text" placeholder="请输入1-60" />
+           <span class="ZC_date_span2">是否限购</span>
+           <ul>
+               <li> <span class="ZC_date_span3">是</span></li>
+               <li> <span class="ZC_date_span4 ZC_date_active">否</span></li>
+           </ul>
+       </div>
+       <div class="ZC_peisong" >
+           <span class="ZC_peisong_span">配送费</span>
+           <ul>
+               <span class="ZC_peisong_rule">请选择配送规则</span>
+               <li> <span class="ZC_peisong_no ZC_peisong_active">本项目无配送</span></li>
+               <li> <span class="ZC_peisong_yes">有配送</span></li>
+               <li> <span class="ZC_peisong_money" id="ZC_peisong_money" style="display:none;">10.00</span></li>
+           </ul>
+       </div>
+       <div class="ZC_back_time" >
+           <span class="ZC_back_span">回报时间</span>
+               <span class="ZC_back_win">众筹成功后</span>
+               <input class="ZC_date_input" type="text" placeholder="请输入1-60"/>
+               <span class="ZC_back_day">天</span>
+       </div>
+       <div class="ZC_back_neirong" >
+           <span class="ZC_back_content">回报内容</span>
+           <textarea name="" id="textarea_content" cols="10" rows="5">请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称</textarea>
+       </div>
+       <div class="add_text">
+           <div class="ZC_imagetext">添加图文</div>
+            <div class="add_text2"></div>
+       </div>
+       <div class="ZC_time">
+           <label class="ZC_timelabel">发布开始时间</label>
+           <input name="act_start_time" type="text" class="text-box" value="" placeholder="发布时间" title="发布时间" readonly="readonly" style="cursor:pointer;"/>
+           <label class="ZC_timelabe2">发布区域</label>
+           <ul>
+               <span id="ZC_user">用户所在学校</span>
+               <li><span class="ZC_usercity1 ZC_user_active">成都</span></li>
+               <li><span class="ZC_usercity2">全国</span></li>
+           </ul>
+       </div>
+       <div class="ZC_footer">
+           <p>发布</p>
+       </div>
+   </div>
+</div>
+<!--发布众筹结束-->
+
+<!--审核中的众筹-->
+<div class="audit_Crowdfunding">
+    <div class="not_pass">
+        <div class="audit_content_1">
+            <div class="audit_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+            <div class="audit_mainimg_right">
+                <h1>标题</h1>
+                <span class="audit_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+                <div class="audit_from">
+                    <div class="audit_from_s">
+                        <span class="audit_m">￥：</span>
+                        <span class="audit_m1">50.00</span>
+                        <ul>
+                            <li>剩余15天</li>
+                            <li><img src="../images/audit_time.jpg" alt=""/></li>
+                            <li class="audit_from_address">四川大学江安校区</li>
+                            <li>来自成都</li>
+                        </ul>
+                    </div>
+                    <span class="already">已筹</span>
+                    <span class="already1">5000.00</span>
+                    <span class="finish">完成度</span>
+                    <span class="finish1">22%</span>
+                </div>
+                <div class="audit_click">
+                    <span class="audit_no">审核不通过</span>
+                    <span class="audit_xq">查看详情</span>
+                    <span class="audit_again">再次编辑</span>
+                    <span class="audit_delete">删除</span>
+                </div>
+            </div>
+        </div>
+        <div class="audit_content_pass" style="display:none;">
+            <p>很遗憾你的项目未通过官方审核，原因如下：</p>
+            <span class="cause">阿道夫爱的是范德萨佛挡杀佛水电费水电费水电费水电费啥地方阿斯蒂芬啥地方士大夫士大夫士大夫的是范德萨佛挡杀佛水电费水电费水电费水电费啥地方阿斯蒂芬啥地方士大夫士大夫士大夫的是范德萨佛挡杀佛水电费水电费水电费水电费啥地方阿斯蒂芬啥地方士大夫士大夫士大夫阿斯蒂芬收到</span>
+            <span class="affirm">确认</span>
+        </div>
+    </div>
+    <div class="pass">
+        <div class="audit_content_1">
+            <div class="audit_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+            <div class="audit_mainimg_right">
+                <h1>标题</h1>
+                <span class="audit_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+                <div class="audit_from">
+                    <div class="audit_from_D">
+                        <span class="audit_m">￥：</span>
+                        <span class="audit_m1">50.00</span>
+                        <ul>
+                            <li>剩余15天</li>
+                            <li><img src="../images/audit_time.jpg" alt=""/></li>
+                            <li class="audit_from_address">四川大学江安校区</li>
+                            <li>来自成都</li>
+                        </ul>
+                    </div>
+                    <span class="already">已筹</span>
+                    <span class="already1">5000.00</span>
+                    <span class="finish">完成度</span>
+                    <span class="finish1">22%</span>
+                </div>
+                <div class="pass_audit_click">
+                    <span class="pass_audit_no">待审核</span>
+                    <div class="pass_audit_r">
+                        <span class="pass_audit_again">再次编辑</span>
+                        <span class="pass_audit_delete">删除</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="audit_content_1">
+            <div class="audit_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+            <div class="audit_mainimg_right">
+                <h1>标题</h1>
+                <span class="audit_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+                <div class="audit_from">
+                    <div class="audit_from_D">
+                        <span class="audit_m">￥：</span>
+                        <span class="audit_m1">50.00</span>
+                        <ul>
+                            <li>剩余15天</li>
+                            <li><img src="../images/audit_time.jpg" alt=""/></li>
+                            <li class="audit_from_address">四川大学江安校区</li>
+                            <li>来自成都</li>
+                        </ul>
+                    </div>
+                    <span class="already">已筹</span>
+                    <span class="already1">5000.00</span>
+                    <span class="finish">完成度</span>
+                    <span class="finish1">22%</span>
+                </div>
+                <div class="pass_audit_click">
+                    <span class="pass_audit_no">待审核</span>
+                    <div class="pass_audit_r">
+                        <span class="pass_audit_again">再次编辑</span>
+                        <span class="pass_audit_delete">删除</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="audit_content_1">
+            <div class="audit_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+            <div class="audit_mainimg_right">
+                <h1>标题</h1>
+                <span class="audit_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+                <div class="audit_from">
+                    <div class="audit_from_D">
+                        <span class="audit_m">￥：</span>
+                        <span class="audit_m1">50.00</span>
+                        <ul>
+                            <li>剩余15天</li>
+                            <li><img src="../images/audit_time.jpg" alt=""/></li>
+                            <li class="audit_from_address">四川大学江安校区</li>
+                            <li>来自成都</li>
+                        </ul>
+                    </div>
+                    <span class="already">已筹</span>
+                    <span class="already1">5000.00</span>
+                    <span class="finish">完成度</span>
+                    <span class="finish1">22%</span>
+                </div>
+                <div class="pass_audit_click">
+                    <span class="pass_audit_no">待审核</span>
+                    <div class="pass_audit_r">
+                        <span class="pass_audit_again">再次编辑</span>
+                        <span class="pass_audit_delete">删除</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="audit_content_1">
+            <div class="audit_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+            <div class="audit_mainimg_right">
+                <h1>标题</h1>
+                <span class="audit_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+                <div class="audit_from">
+                    <div class="audit_from_D">
+                        <span class="audit_m">￥：</span>
+                        <span class="audit_m1">50.00</span>
+                        <ul>
+                            <li>剩余15天</li>
+                            <li><img src="../images/audit_time.jpg" alt=""/></li>
+                            <li class="audit_from_address">四川大学江安校区</li>
+                            <li>来自成都</li>
+                        </ul>
+                    </div>
+                    <span class="already">已筹</span>
+                    <span class="already1">5000.00</span>
+                    <span class="finish">完成度</span>
+                    <span class="finish1">22%</span>
+                </div>
+                <div class="pass_audit_click">
+                    <span class="pass_audit_no">待审核</span>
+                    <div class="pass_audit_r">
+                        <span class="pass_audit_again">再次编辑</span>
+                        <span class="pass_audit_delete">删除</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--审核中的众筹结束-->
+
+</body>
+
+<script src="../js/jquery-ui-1.10.4.custom.min.js"></script>
+<script src="../js/jquery-ui-timepicker-addon.js"></script>
+<script src="../js/jquery-ui-timepicker-zh-CN.js"></script>
+<script src="../js/jquery.ui.datepicker-zh-CN.js"></script>
+<script type="text/javascript">
+    $('.money1').change(function() {
+//        $(this).val($(this).val().replace(/[^0-9.]/g,''));
+//    }).bind("paste",function(){  //CTR+V事件处理
+//        $(this).val($(this).val().replace(/[^0-9.]/g,''));
+//    }).css("ime-mode", "disabled");
+        var str = $(this).val();
+        var reg=/^[0-9]+([.][0-9]{1}){0,1}$/;
+        if(str.length!=0){
+            if(reg.test(str) ){
+                var num=parseInt(str);
+                if(num != 0 )
+                {
+                    return;
+                }else
+                {
+                    $(this).val('');
+                }
+            }
+            else
+            {
+                $(this).val('');
+            }
+        }else{
+            $(this).val('');
+        }
+    });
+
+    $('.money3').change(function(){
+        var str = $(this).val();
+        var reg=/^[0-9]+([.][0-9]{1}){0,1}$/;
+        if(str.length!=0){
+            if(reg.test(str) ){
+                var num=parseInt(str);
+                if(num!= 0 )
+                {
+                }else
+                {
+                    $(this).val('');
+                }
+            }
+            else
+            {
+                $(this).val('');
+            }
+        }else{
+            $(this).val('');
+        }
+    });
+
+    $('.money2').change(function(event){
+        var str = $(this).val();
+        var partten = /^\d+$/;
+        if(str.length!=0){
+            if(partten.test(str)){
+                var num=parseInt(str);
+                if(num> 0)
+                {
+                }else
+                {
+                    $(this).val('');
+                }
+             }else{
+                $(this).val('');
+            }
+        } else
+        {
+            $(this).val('');
+        }
+    });
+
+    $('#ZC_date_1').change(function(event){
+        var str = $(this).val();
+        var reg=/^[0-9]{1,3}$/;
+        if(str.length!=0){
+            if(reg.test(str) ){
+                var num=parseInt(str);
+                if(num> 0 && num<=60)
+                {
+                }else
+                {
+                    $(this).val('');
+                }
+            }
+            else
+            {
+                $(this).val('');
+                $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+            }
+        }else{
+            $(this).val('');
+            $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+        }
+    });
+
+    $('.ZC_date_input').change(function(event){
+        var str = $(this).val();
+        var reg=/^[0-9]{1,3}$/;
+        if(str.length!=0){
+            if(reg.test(str) ){
+                var num=parseInt(str);
+                if(num> 0 && num<=60)
+                {
+                }else
+                {
+                    $(this).val('');
+                }
+
+            }
+            else
+            {
+                $(this).val('');
+                $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+            }
+        }else{
+            $(this).val('');
+            $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+        }
+    });
+    <!--发布众筹-->
+    function topaddImg(){    //上传首页图片
+        $('#add_test').click();
+        $("#add_test").change(function (e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#imgUpload").attr({'src': e.target.result});
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    $( "input[name='act_start_time']" ).datetimepicker();
+    $(document).delegate('.schoolyard_header_r li', 'click', function(ev){
+        $('.schoolyard_header_r li').removeClass('schoolyard_liactive');
+        $(this).addClass('schoolyard_liactive');
+        $(this).addClass('liactive');
+        var this_id= $(this).index();
+//       console.log(this_id);
+        if(this_id == '5'){
+            $('.audit_Crowdfunding').show();
+            $('.schoolyard_main').hide();
+
+        }
+        else if(this_id == '0'){
+            $('.audit_Crowdfunding').hide();
+            $('.schoolyard_main').show();
+
+        }
+    });
+    $(document).delegate('.schoolyard_header_r .add_2', 'click', function(ev){
+        $('.audit_Crowdfunding').hide();
+        $('.schoolyard_main').show();
+        $('.new_').addClass('schoolyard_liactive');
+        $('#li2,#li3,#li4,#li5,#li6').removeClass('schoolyard_liactive');
+    });
+     $(document).delegate('.ZC_type li', 'click', function(ev){
+            $('.ZC_type li').removeClass('ZC_active');
+            $(this).addClass('ZC_active');
+        });
+    $(document).delegate('.ZC_date ul li span', 'click', function(ev){
+            $('.ZC_date ul li span').removeClass('ZC_date_active');
+            $(this).addClass('ZC_date_active');
+        });
+    $(document).delegate('.ZC_peisong ul li span', 'click', function(ev){
+            $('.ZC_peisong ul li span').removeClass('ZC_peisong_active');
+            $(this).addClass('ZC_peisong_active');
+
+        });
+    $(document).delegate('.ZC_peisong ul li', 'click', function(ev){
+        var this_ps= $(this).index();
+        console.log(this_ps);
+        if(this_ps == '2'){
+            $('.ZC_peisong_money').show();
+        }
+        else{
+            $('.ZC_peisong_money').hide();
+        }
+    });
+    $(document).delegate('.ZC_time ul li span', 'click', function(ev){
+            $('.ZC_time ul li span').removeClass('ZC_user_active');
+            $(this).addClass('ZC_user_active');
+        });
+    var index=1;
+    $(document).ready(function(){
+        createDom();
+    });
+    function t(i){
+        $("#filebutton"+i).click();
+        $("#filebutton"+i).change(function (e) {
+            var file = e.target.files[0];
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                $("#imgdom"+i).attr({'src': e.target.result});
+            };
+            reader.readAsDataURL(file);
+            createDom();
+            var addheight = $(".add_text2").height();
+            $('.ZC_imagetext').css('line-height',addheight + "px");
+        });
+    }
+    function createDom(){
+        var filedom ="<div class='div_"+index+"' style='display: flex;'>"+
+                     "<input id='filebutton"+index+"' type='file' style='display: none;' />"+
+                     "<img id='imgdom"+index+"' src='../images/add_img.jpg' style='width: 100px;height: 100px;float: left; cursor: pointer;border: 1px solid #76c5f0;'  onclick='javascript:t("+index+");' />"+
+                     "<textarea id='add_textarea"+index+"  cols='5' rows='2' class='ZC_add_input' type='text'>"+
+                     "</textarea>"+
+                    "<img class='d_delete ZC_add_delete"+index+" 'd_delete' style='float: right; height: 100%;margin: 0 0 0 0;border: 1px solid #76c5f0;' src='../images/ZC_addimg1.jpg' alt=''/>"+
+                    " </div>";
+        $(".add_text2").append(filedom);
+        index++;
+    }
+
+
+//    计算添加的图文并计算行高
+    $(".d_delete").live('click',function(){
+        if( $(".d_delete").length =1){
+            console.log('length=1');
+            $('.ZC_imagetext').css('line-height',102+'px');
+        }
+        if($(".d_delete").length >1) {
+            var lengthDiv =$(".add_text2").find('div');
+            var addheight1 = lengthDiv.length-1;
+            var addheightDiv = addheight1*102+'px';
+            console.log(addheight1);
+            $(this).parent().remove();
+            $('.ZC_imagetext').css('line-height',addheightDiv);
+        }
+    });
+
+<!--发布众筹结束-->
+
+
+    $(document).delegate('.audit_xq', 'click', function(ev){
+        $('.audit_content_pass').show();
+    });
+    $(document).delegate('.affirm', 'click', function(ev){
+        $('.audit_content_pass').hide();
+    });
+
+</script>
+
+</html>

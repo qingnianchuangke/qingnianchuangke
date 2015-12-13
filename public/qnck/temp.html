@@ -1,0 +1,24 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+</head>
+<body>
+    <textarea id="content" style="height:200px;"></textarea>
+    <input type="button" id="convert" onclick="convertContent()" value="convert()" />
+    <script>
+        function convertContent() {
+            var str = $("#content").val();
+            var result = ""
+            $(str.split("\n")).each(function () {
+                var item = this == "" ? "$nbsp;" : this;
+                result += '"<p class=\\"faq-p\\">' + item + '</p>" + \n';
+            });
+            console.log(result);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>登录</title>
+    <meta charset="utf-8" />
+    <script type="text/javascript" src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/common.js"></script>
+    <style type="text/css">
+    body {background:url(images/denglunbeijing.jpg) no-repeat;text-align: center;background-size:cover;max-width:555px;
+            margin-left:auto;
+            margin-right:auto; }
+    input{outline:none} 
+    input::-webkit-input-placeholder, textarea::-webkit-input-placeholder { 
+        color:white;
+    }
+    input:-moz-placeholder, textarea:-moz-placeholder { 
+        color:white;
+    }
+    input::-moz-placeholder, textarea::-moz-placeholder { 
+        color:white;
+    }
+    input:-ms-input-placeholder, textarea:-ms-input-placeholder { 
+        color:white;
+    }
+    </style>
+<script type="text/javascript">
+var rurl  = "";
+$(document).ready(function () {
+    rurl = GetQueryString("rurl");
+    var tel = getCookie("tel");
+    var pass = getCookie("pass");
+    if(tel!=null && tel!="")
+        autologin(tel,pass);
+});
+function registr(){
+    window.location.href="chooseschool.html?rurl="+rurl;
+}
+function autologin(tel,pass){
+    $.ajax({
+        type: "post",
+        url: _url + "wechat/user/login",
+        data: {mobile:tel,pass:pass},
+        dataType: "json",
+        success: function (r) {
+            if (r.result == "2000") {
+                SetCookie("token",r.data.token);
+                SetCookie("uid",r.data.id);
+                SetCookie("sid",r.data.school.id);
+                window.location.href=rurl;
+            }else{
+                alert(r.info);
+            }
+        },
+        error: function () {
+            alert("加载失败!");
+        }
+    });
+}
+function login(){
+    var tel = $("#mobileNum").val();
+    var pass = $("#password").val();
+    var telReg = !!tel.match(/^(0|86|17951)?(13[0-9]|15[012356789]|17[678]|18[0-9]|14[57])[0-9]{8}$/);
+    if(!telReg){
+        alert("请输入正确的手机号码");
+        return;
+    }
+    $.ajax({
+        type: "post",
+        url: _url + "wechat/user/login",
+        data: {mobile:tel,pass:pass},
+        dataType: "json",
+        success: function (r) {
+            if (r.result == "2000") {
+                SetCookie("tel",tel);
+                SetCookie("pass",pass);
+                SetCookie("token",r.data.token);
+                SetCookie("uid",r.data.id);
+                SetCookie("sid",r.data.school.id);
+                window.location.href=rurl;
+            }else{
+                alert("登录失败");
+            }
+        },
+        error: function () {
+            alert("加载失败!");
+        }
+    });
+}
+function SetCookie(name,value)//两个参数，一个是cookie的名子，一个是值
+{
+    var Days = 7; //此 cookie 将被保存 30 天
+    var exp  = new Date();    //new Date("December 31, 9998");
+    exp.setTime(exp.getTime() + Days*24*60*60*1000);
+    document.cookie = name + "="+ escape (value) + ";expires=" + exp.toGMTString();
+}
+function getCookie(name)//取cookies函数       
+{
+    var arr = document.cookie.match(new RegExp("(^| )"+name+"=([^;]*)(;|$)"));
+     if(arr != null) return (arr[2]); return null;
+}
+function forgetpwd () {
+    window.location.href='zhmm.html?rurl='+rurl;
+}
+</script>
+</head>
+<body>
+    <img style="width:200px;padding-top:20px;" src="images/denglu_logo1.png" />
+    <p style="position:relative;width:80%;margin:0 auto;margin-top:50px;">
+        <img style="float:left;height:20px;position:absolute;top:10px;left:20px" src="images/shouji.png" />
+        <input type="text" id="mobileNum" placeholder="注册手机号" style="width:100%;height:40px;text-align:center;background-color:#87BACD;border:0px;border-radius: 20px;" />
+    </p>
+    <p style="position:relative;width:80%;margin:0 auto;margin-top:15px;">
+        <img style="float:left;height:20px;position:absolute;top:10px;left:20px" src="images/mima.png" />
+        <input type="password" id="password" placeholder="登录密码" style="width:100%;height:40px;text-align:center;background-color:#87BACD;border:0px;border-radius: 20px;" />
+    </p>
+    <p style="color:white">
+        <img style="width:15px;" src="images/wangjimima.png"/>
+        <span onclick="forgetpwd()">忘记密码</span>
+        <img style="width:15px;" src="images/zhuce.png"/>
+        <span onclick="registr()">快速注册</span>
+    </p>
+    <div style="color:white;background-color:#87BACD;margin:0 auto;border-radius: 30px;width:80%;height:30px;font-size:20px;padding-top:10px;margin-top:50px;" onclick="login()">
+        登录
+    </div>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/flea_Boutique.css" media="screen">
+</head>
+<script src="../js/jquery.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        /* 图片8:5显示 */
+        $('.flea_mainimg img').each(function(){
+            var w=$(this).width();//获取图片宽度
+            var h=$(this).height()*5/8;
+            $(this).attr({width:w,height:h});
+        });
+    });
+</script>
+<body>
+<div class="flea_header">
+    <div class="flea_header_r">
+        <div class="div_img">
+                 <img class="flea_addimg" src="../images/add.jpg" alt=""/>
+        </div>
+        <ul class="flea_ul">
+            <li class="fleaNew">发布新的交易</li>
+            <li  id="li2">已失败的交易</li>
+            <li  id="li1" class="flea_liactive">进行中的交易</li>
+        </ul>
+    </div>
+</div>
+<!--进行中的交易  开始 -->
+<div class="flea_proceed">
+    <div class="flea_content_1">
+        <div class="flea_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+        <div class="flea_mainimg_right">
+            <h1>标题</h1>
+            <span class="flea_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+            <div class="flea_from">
+                <span class="flea_m">￥：</span>
+                <span class="flea_m1">50.00</span>
+                <ul>
+                    <li class="flea_from_address">四川大学江安校区</li>
+                    <li>来自成都</li>
+                </ul>
+            </div>
+            <div class="flea_click">
+                <span class="flea_again">再次编辑</span>
+                <span class="flea_delete">删除</span>
+            </div>
+        </div>
+    </div>
+    <div class="flea_content_1">
+        <div class="flea_mainimg"> <img class="audit_img" src="../images/werbenimg_1.jpg" alt=""/></div>
+        <div class="flea_mainimg_right">
+            <h1>标题</h1>
+            <span class="flea_intro">这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字这是简介文字</span>
+            <div class="flea_from">
+                <span class="flea_m">￥：</span>
+                <span class="flea_m1">50.00</span>
+                <div class="flea_from_div">
+                    <ul>
+                        <li class="flea_from_address">四川大学江安校区</li>
+                        <li>来自成都</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="flea_click">
+                <span class="flea_again">再次编辑</span>
+                <span class="flea_delete">删除</span>
+            </div>
+        </div>
+    </div>
+</div>
+<!--进行中的交易  结束 -->
+
+<!--发布新的交易  开始 -->
+<div class="publish_flea" style="display:none;">
+    <label class="publish_label">为保障用户体验，青年创平台严禁恶意营销以及诱导分享朋友圈，严禁发布色情低俗、暴力血腥、政治谣言等各类违反法律法规及相关政府规定的信息。一旦发现，我们将严厉打击和处理。发布前请认证阅读青年创众筹相关服务协议。</label>
+    <div class="publish__content">
+        <div class="flea_name">
+            <span class="commodity_name">商品名称</span>
+            <input class="commodity_inp" type="text" placeholder="请输入商品名称"/>
+        </div>
+        <div class="publish_homepage">
+            <img src="../images/sc_img.jpg" id="publish_testimg" onclick="publishImg()" />
+            <div class="publish_add">
+                <span>添加首页图片</span>
+                <div class="publish_addImg">
+                    <img class="publish_top_addimg" src="../images/add_img.jpg" alt="" onclick="publishImg()" />
+                    <div id="publish_imgUpload">
+                        <img id="publish_img" src="" alt=""/>
+                    </div>
+                    <input type="file" id="publish_test" style="display: none"/>
+                </div>
+            </div>
+        </div>
+        <div class="flea_introduce">
+            <span class="commodity_jies">商品介绍</span>
+            <textarea name="" id="commodity_textarea" cols="10" rows="5">请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称请输入发布众筹的名称</textarea>
+        </div>
+        <div class="flea_type">
+            <span class="commodity_type">商品类目</span>
+            <ul class="flea_type_ul">
+                <span class="lea_select">请选择</span>
+                <li class="flea_type_li">电器数码</li>
+                <li>鞋包服饰</li>
+                <li>书籍影音</li>
+                <li>运动出行</li>
+                <li>创意手工</li>
+                <li>虚拟商品</li>
+                <li>其他</li>
+            </ul>
+            <span class="money_reward">赏金令</span>
+        </div>
+        <div class="cols_sp_price">
+            <div class="sp_price">
+                <span class="price">商品价格</span>
+                <input class="sp_input" type="text" placeholder="商品价格"/>
+            </div>
+            <div class="iphone_open">
+                <span class="iphone_span">电话公开</span>
+                <input class="iphone_input" type="text" placeholder="请输入电话号码"/>
+                <ul class="iphone_ul">
+                    <li class="iphone_ul_li1 iphone_active">是</li>
+                    <li class="iphone_ul_li2">否</li>
+                    <span class="iphone_ul_span"></span>
+                </ul>
+            </div>
+        </div>
+        <div class="flea_zcTime">
+            <div class="div_zcTime">
+                <span class="zcTime">众筹天数</span>
+                <input class="zcTime_input" type="text" placeholder="请输入1-60"/>
+            </div>
+            <div class="xiangou">
+                <span class="xiangou_span">是否限购</span>
+                <ul class="xiangou_ul">
+                    <li class="xiangou_ul_li1 xiangou_active">是</li>
+                    <li class="xiangou_ul_li2">否</li>
+                    <span class="xiangou_ul_span"></span>
+                </ul>
+            </div>
+        </div>
+        <div class="flea_addTW">
+            <div class="add_TW">
+                <span class="span_add_TW">添加图文</span>
+            </div>
+            <div class="fleaAdd">
+
+            </div>
+        </div>
+        <div class="flea_fb">
+            <p>立即发布</p>
+        </div>
+    </div>
+</div>
+
+<!--发布新的交易  结束 -->
+</body>
+<script type="text/javascript">
+//    nav 开始
+    $(document).delegate('.flea_header_r li', 'click', function(ev){
+        $('.flea_header_r li').removeClass('flea_liactive');
+        $(this).addClass('flea_liactive');
+        var tx=  $(this).index();
+//        console.log(tx);
+        if(tx == '0'){
+            $('.flea_proceed').hide();
+            $('.publish_flea').show();
+        }
+        else if(tx == '2'){
+            $('.flea_proceed').show();
+            $('.publish_flea').hide();
+        }
+    });
+    $(document).delegate('.flea_header_r .flea_addimg', 'click', function(ev){
+        $('.flea_proceed').hide();
+        $('.publish_flea').show();
+        $('.fleaNew').addClass('flea_liactive');
+        $('#li1,#li2').removeClass('flea_liactive');
+    });
+//    nav 结束
+
+function publishImg(){    //上传首页图片
+    $('#publish_test').click();
+    $("#publish_test").change(function (e) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $("#publish_img").attr({'src': e.target.result});
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+//发布新的交易
+$(document).delegate('.flea_type_ul li', 'click', function(ev){
+    $('.flea_type_ul li').removeClass('flea_type_li');
+    $(this).addClass('flea_type_li');
+});
+$(document).delegate('.iphone_ul li', 'click', function(ev){
+    $('.iphone_ul li').removeClass('iphone_active');
+    $(this).addClass('iphone_active');
+});
+$(document).delegate('.xiangou_ul li', 'click', function(ev){
+    $('.xiangou_ul li').removeClass('xiangou_active');
+    $(this).addClass('xiangou_active');
+});
+
+var index=1;
+$(document).ready(function(){
+    createDom();
+});
+function t(i){
+    $("#filebutton"+i).click();
+    $("#filebutton"+i).change(function (e) {
+        var file = e.target.files[0];
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            $("#imgdom"+i).attr({'src': e.target.result});
+        };
+        reader.readAsDataURL(file);
+        createDom();
+        var addheight = $(".fleaAdd").height();
+//        console.log(addheight);
+        $('.add_TW').css('line-height',addheight + "px");
+    });
+}
+function createDom(){
+    var filedom ="<div class='div_"+index+"' style='display: flex;'>"+
+            "<input id='filebutton"+index+"' type='file' style='display: none;' />"+
+            "<img id='imgdom"+index+"' src='../images/add_img.jpg' style='width: 100px;height: 100px;float: left; cursor: pointer;border: 1px solid #76c5f0;'  onclick='javascript:t("+index+");' />"+
+            "<textarea id='add_textarea"+index+"  cols='5' rows='2' class='ZC_add_input' type='text'>"+
+            "</textarea>"+
+            "<img class='d_delete ZC_add_delete"+index+" 'd_delete' style='float: right; height: 100%;margin: 0 0 0 0;border: 1px solid #76c5f0;' src='../images/ZC_addimg1.jpg' alt=''/>"+
+            " </div>";
+    $(".fleaAdd").append(filedom);
+    index++;
+}
+$(".d_delete").live('click',function(){
+    if( $(".d_delete").length =1){
+        console.log('length=1');
+        $('.add_TW').css('line-height',102+'px');
+    }
+    if($(".d_delete").length >1) {
+        var lengthDiv =$(".add_text2").find('div');
+        var addheight1 = lengthDiv.length-1;
+        var addheightDiv = addheight1*102+'px';
+        console.log(addheight1);
+        $(this).parent().remove();
+        $('.add_TW').css('line-height',addheightDiv);
+    }
+});
+
+// input 验证
+$('.sp_input').change(function() {
+//        $(this).val($(this).val().replace(/[^0-9.]/g,''));
+//    }).bind("paste",function(){  //CTR+V事件处理
+//        $(this).val($(this).val().replace(/[^0-9.]/g,''));
+//    }).css("ime-mode", "disabled");
+    var str = $(this).val();
+    var reg=/^[0-9]+([.][0-9]{1}){0,1}$/;
+    if(str.length!=0){
+        if(reg.test(str) ){
+            var num=parseInt(str);
+            if(num != 0 )
+            {
+                return;
+            }else
+            {
+                $(this).val('');
+            }
+        }
+        else
+        {
+            $(this).val('');
+        }
+    }else{
+        $(this).val('');
+    }
+});
+$('.iphone_input').change(function(){
+    var str = $(this).val();
+    var reg=/((\d{11})|^((\d{7,8})|(\d{4}|\d{3})-(\d{7,8})|(\d{4}|\d{3})-(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1})|(\d{7,8})-(\d{4}|\d{3}|\d{2}|\d{1}))$)/ ;
+    if(str.length!=0){
+        if(reg.test(str) ){
+            var num=parseInt(str);
+            if(num!= 0 )
+            {
+            }else
+            {
+                $(this).val('');
+            }
+        }
+        else
+        {
+            $(this).val('');
+        }
+    }else{
+        $(this).val('');
+    }
+});
+$('.zcTime_input').change(function(event){
+    var str = $(this).val();
+    var reg=/^[0-9]{1,3}$/;
+    if(str.length!=0){
+        if(reg.test(str) ){
+            var num=parseInt(str);
+            if(num> 0 && num<=60)
+            {
+            }else
+            {
+                $(this).val('');
+            }
+        }
+        else
+        {
+            $(this).val('');
+            $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+        }
+    }else{
+        $(this).val('');
+        $('#ZC_date_1').attr('placeholder','请正确输入1-60')
+    }
+});
+
+</script>
+</html>

@@ -36,7 +36,7 @@
         $(document).on('click', '#btn_fund', function () {
             javascript:appObject.openShopOnAndroid();
         });
-        var margin_top = 0.06;
+        var margin_top = 0.07;
         var height_ratio = 3.4;
         layout(margin_top, height_ratio);
     });

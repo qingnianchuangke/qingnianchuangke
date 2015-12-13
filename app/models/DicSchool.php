@@ -25,14 +25,4 @@ class DicSchool extends \Eloquent
     }
 
     // laravel relations
-    
-    public function user()
-    {
-        return $this->hasMany('User', 'u_school_id', 't_id');
-    }
-
-    public function promo()
-    {
-        return $this->hasMany('PromotionInfo', 's_id', 't_id');
-    }
 }

@@ -5,6 +5,15 @@ class User extends Eloquent
 
     public $primaryKey = 'u_id';
 
+    public static function getVerifyType()
+    {
+        return [
+            1 => '校园认证',
+            2 => '官方认证',
+            3 => '社团认证'
+        ];
+    }
+
     /**
      * validate base info
      * @author Kydz 2015-06-14
@@ -14,7 +23,7 @@ class User extends Eloquent
     {
         $validator = Validator::make(
             ['mobile' => $this->u_mobile, 'pass' => $this->u_password],
-            ['mobile' => 'required|digits:11', 'pass' => 'required|alpha_dash|min:6']
+            ['mobile' => 'required|digits:11', 'pass' => 'required|min:6']
         );
         if ($validator->fails()) {
             $msg = $validator->messages();
@@ -33,9 +42,20 @@ class User extends Eloquent
     {
         $token = Str::random(32);
         if (User::where('u_token', '=', $token)->count() > 0) {
-            $this->checkTokenUniqueness();
+            $token = $this->getUniqueToken();
         }
         return $token;
+    }
+
+    public function getInviteCode()
+    {
+        return $this->u_id;
+        $code = Str::random(6);
+        if (User::where('u_invite_code', '=', $code)->count() > 0) {
+            $code = $this->getInviteCode();
+        }
+        $code = strtoupper($code);
+        return $code;
     }
 
     /**
@@ -46,32 +66,45 @@ class User extends Eloquent
     public function register()
     {
         $this->baseValidate();
-        // generate token
-        $this->u_token = $this->getUniqueToken();
         if (empty($this->u_school_id)) {
-            throw new Exception("没有传入有效的学校", 1);
+            throw new Exception("没有传入有效的学校", 3002);
         }
         // chcek if mobile exsits
         if (User::where('u_mobile', '=', $this->u_mobile)->count() > 0) {
-            throw new Exception("手机号码已被使用", 1);
+            throw new Exception("手机号码已被使用", 3002);
         }
+        // generate token
+        $this->u_token = $this->getUniqueToken();
         $this->u_password = Hash::make($this->u_password);
         $this->u_status = 1;
-        $this->u_nickname = $this->u_mobile;
         $this->u_change = 1;
+        $this->u_sex = 3;
+        $this->u_birthday = Tools::getNow('Y-m-d');
         $this->save();
+        $this->u_invite_code = $this->getInviteCode();
         $re = [];
+        $this->u_nickname = $this->u_name = $this->u_id;
         $re['token'] = $this->u_token;
         $now = new Datetime();
         $now->modify('+ 30 days');
+        $re['invite_code'] = $this->u_invite_code;
         $re['expire'] = $now->format('Y-m-d H:i:s');
+        $re['mobile'] = $this->u_mobile;
         $re['id'] = $this->u_id;
+        $re['biograph'] = $this->u_biograph;
+        $re['is_verified'] = $this->u_is_verified;
         $re['name'] = $this->u_name;
         $re['nickname'] = $this->u_nickname;
-        $re['head_img'] = $this->u_head_img;
+        $re['head_img'] = $this->getHeadImg();
         $school = DicSchool::find($this->u_school_id);
-        $re['site'] = $school->t_city;
-        $re['school'] = $school->showInList();
+        if (empty($school)) {
+            $re['city'] = null;
+            $re['school'] = null;
+        } else {
+            $re['city'] = DicCity::where('c_id', '=', $school->t_city)->where('c_province_id', '=', $school->t_province)->first()->showInList();
+            $re['school'] = $school->showInList();
+        }
+        $this->save();
         return $re;
     }
 
@@ -85,23 +118,32 @@ class User extends Eloquent
         $this->baseValidate();
         $user = User::where('u_mobile', '=', $this->u_mobile)->where('u_status', '=', 1)->first();
         if (!isset($user->u_id)) {
-            throw new Exception("请求的用户不可用", 1);
+            throw new Exception("请求的用户不可用", 3002);
         }
         if (!Hash::check($this->u_password, $user->u_password)) {
-            throw new Exception("密码错误", 1);
+            throw new Exception("密码错误", 3002);
         } else {
             $re = [];
             $re['token'] = $user->u_token;
             $now = new Datetime();
             $now->modify('+ 30 days');
             $re['expire'] = $now->format('Y-m-d H:i:s');
+            $re['invite_code'] = $user->u_invite_code;
             $re['id'] = $user->u_id;
             $re['name'] = $user->u_name;
+            $re['mobile'] = $user->u_mobile;
             $re['nickname'] = $user->u_nickname;
-            $re['head_img'] = $user->u_head_img;
+            $re['is_verified'] = $user->u_is_verified;
+            $re['head_img'] = $user->getHeadImg();
+            $re['biograph'] = $user->u_biograph;
             $school = DicSchool::find($user->u_school_id);
-            $re['site'] = $school->t_city;
-            $re['school'] = $school->showInList();
+            if (empty($school)) {
+                $re['city'] = null;
+                $re['school'] = null;
+            } else {
+                $re['city'] = DicCity::where('c_id', '=', $school->t_city)->where('c_province_id', '=', $school->t_province)->first()->showInList();
+                $re['school'] = $school->showInList();
+            }
             $re['gender'] = $user->u_sex;
             $user->load('booths');
             $booths = null;
@@ -111,6 +153,8 @@ class User extends Eloquent
                 }
             }
             $re['boohts'] = $booths;
+            $re['import_type'] = 'phone';
+            $user->save();
             return $re;
         }
     }
@@ -125,15 +169,11 @@ class User extends Eloquent
         $validator = Validator::make(
             [
                 'nickname' => $this->u_nickname,
-                'age' => $this->u_age,
-                'sex' => $this->u_sex,
                 'school_id' => $this->u_school_id,
                 'pass' => $this->u_password,
             ],
             [
                 'nickname' => 'sometimes|max:32',
-                'age' => 'sometimes|digits_between:1,3',
-                'sex' => 'sometimes|digits:1',
                 'school_id' => 'sometimes',
                 'pass' => 'sometimes',
             ]
@@ -154,6 +194,7 @@ class User extends Eloquent
         if ($imgToken) {
             $img = new Img('user', $imgToken);
             $user->u_head_img = $img->getSavedImg($user->u_id, $user->u_head_img);
+            $user->u_head_img = implode(',', $user->u_head_img);
         }
 
         $user->updated_at = date('Y-m-d H:i:s');
@@ -174,8 +215,10 @@ class User extends Eloquent
         $data = [];
         $data['id'] = $this->u_id;
         $data['name'] = $this->u_name;
+        $data['is_verified'] = $this->u_is_verified;
+        $data['verify'] = $this->getVerify();
         $data['nickname'] = $this->u_nickname;
-        $data['head_img'] = $this->u_head_img;
+        $data['head_img'] = $this->getHeadImg();
         $data['gender'] = $this->u_sex;
         $data['lat'] = $this->latitude;
         $data['lng'] = $this->longitude;
@@ -189,13 +232,23 @@ class User extends Eloquent
         return $data;
     }
 
+    public function showInImList()
+    {
+        $data['id'] = $this->u_id;
+        $data['is_verified'] = $this->u_is_verified;
+        $data['head_img'] = $this->getHeadImg();
+        $data['nickname'] = $this->u_nickname;
+        return $data;
+    }
+
     public function showInOffice()
     {
         $data = [];
         $data['id'] = $this->u_id;
         $data['name'] = $this->u_name;
         $data['nickname'] = $this->u_nickname;
-        $data['head_img'] = $this->u_head_img;
+        $data['head_img'] = $this->getHeadImg();
+        $data['is_verified'] = $this->u_is_verified;
         $data['gender'] = $this->u_sex;
         $data['lat'] = $this->latitude;
         $data['lng'] = $this->longitude;
@@ -221,34 +274,38 @@ class User extends Eloquent
             throw new Exception("no such user", 1);
         }
         $data = [];
+        $data['id'] = $this->u_id;
         $data['mobile'] = $this->u_mobile;
         $data['nickname'] = $this->u_nickname;
         $data['age'] = $this->u_age;
         $data['name'] = $this->u_name;
         $data['gender'] = $this->u_sex;
         $data['sex'] = $this->u_sex;
+        $data['praise_count'] = $this->u_praise_count;
         if (!empty($this->u_birthday)) {
             $birthday = new DateTime($this->u_birthday);
             $birthday = $birthday->format('Y-m-d');
         } else {
-            $birthday = null;
+            $birthday = '';
         }
         $data['birth'] = $birthday;
-        $path = explode(',', $this->u_head_img);
-        $path = array_pop($path);
-        $data['head_img'] = $path;
+        $data['head_img'] = $this->getHeadImg();
         $data['school_id'] = $this->u_school_id;
         $data['created_at'] = $this->created_at->format('Y-m-d H:i:s');
         $data['follower_count'] = $this->u_follower_count;
         $data['following_count'] = $this->u_following_count;
         $data['status'] = $this->u_status;
         $data['remark'] = $this->u_remark;
-        $data['home_imgs'] = Img::toArray($this->u_home_img);
+        $data['home_imgs'] = Img::toArray($this->u_home_img, true);
+        $data['is_verified'] = $this->u_is_verified;
+        $data['verify'] = $this->getVerify();
         $data['biograph'] = $this->u_biograph;
+        $data['age'] = $this->u_age;
         $data['lat'] = $this->latitude;
         $data['lng'] = $this->longitude;
         if (!empty($this->school)) {
             $data['school'] = $this->school->showInList();
+            $data['city'] = DicCity::where('c_id', '=', $this->school->t_city)->where('c_province_id', '=', $this->school->t_province)->first()->showInList();
         }
         return $data;
     }
@@ -389,6 +446,83 @@ class User extends Eloquent
         // todo delete rlations with booth, product, set status to 3
     }
 
+    public function getHeadImg()
+    {
+        if (!empty($this->u_head_img)) {
+            $img = Img::toArray($this->u_head_img);
+            $img = empty($img) ? '' : reset($img);
+            return $img;
+        } else {
+            $this->load('importQq');
+            if (!empty($this->importQq)) {
+                if ($this->importQq->u_head_img) {
+                    return $this->importQq->u_head_img;
+                }
+            }
+            $this->load('importWechat');
+            if (!empty($this->importWechat)) {
+                if ($this->importWechat->u_head_img) {
+                    return $this->importWechat->u_head_img;
+                }
+            }
+        }
+        return '';
+    }
+
+    private function getVerify()
+    {
+        $verify_tag = 'V';
+        if ($this->u_is_verified) {
+            $verify_tag = '认';
+            $verify_type = 1;
+        } elseif ($this->u_is_club_verified) {
+            $verify_type = 3;
+        } elseif ($this->u_type == 2) {
+            $verify_type = 2;
+        } else {
+            $verify_type = 0;
+            $verify_tag = '';
+        }
+        return ['verify_tag' => $verify_tag, 'verify_type' => $verify_type];
+    }
+
+    public function fakeUser()
+    {
+        $this->u_school_id = rand(1, 2569);
+        $this->u_password = 111111;
+        $this->u_token = $this->getUniqueToken();
+        $this->u_password = Hash::make($this->u_password);
+        $this->u_status = 1;
+        $this->u_change = 1;
+        $this->u_type = 1;
+        $this->u_sex = 3;
+        $this->u_birthday = Tools::getNow('Y-m-d');
+        $this->save();
+        $this->u_invite_code = $this->getInviteCode();
+        $this->save();
+    }
+
+    public static function thanksForInvite($code, $u_id)
+    {
+        if (!$code) {
+            return true;
+        }
+        $user = User::find($code);
+        if (empty($user)) {
+            throw new Exception("无法找到输入的邀请码", 2001);
+        }
+        // !!!!! set reward to 0.00, no need to charge user wallet
+        $reward = '0.00';
+        $log = new LogUserInviteCode();
+        $log->u_id = $u_id;
+        $log->inviter_id = $user->u_id;
+        $log->amount = $reward;
+        $log->save();
+        // $wallet = UsersWalletBalances::find($user->u_id);
+        // $wallet->putIn($reward);
+        return true;
+    }
+
     public static function filterByDistance($lat, $lng, $distance)
     {
         $distance = $distance * $distance;
@@ -451,14 +585,9 @@ class User extends Eloquent
         return $this->belongsToMany('User', 'attentions', 'u_fans_id', 'u_id');
     }
 
-    public function bankCards()
+    public function bankCard()
     {
-        return $this->hasMany('UsersBankCard', 'u_id', 'u_id');
-    }
-
-    public function contact()
-    {
-        return $this->hasOne('UsersContactPeople', 'u_id', 'u_id');
+        return $this->hasOne('UserProfileBankcard', 'u_id', 'u_id');
     }
 
     public function school()
@@ -476,8 +605,43 @@ class User extends Eloquent
         return $this->hasMany('PromotionPraise', 'u_id', 'u_id');
     }
 
+    public function booth()
+    {
+        return $this->hasOne('Booth', 'u_id', 'u_id');
+    }
+
     public function booths()
     {
         return $this->hasMany('Booth', 'u_id', 'u_id');
+    }
+
+    public function profileBase()
+    {
+        return $this->hasOne('UserProfileBase', 'u_id', 'u_id');
+    }
+
+    public function praises()
+    {
+        return $this->morphToMany('Praise', 'praisable');
+    }
+
+    public function favorites()
+    {
+        return $this->morphToMany('Favorite', 'favoriable');
+    }
+
+    public function importQq()
+    {
+        return $this->hasOne('UserImportQq', 'u_id', 'u_id');
+    }
+
+    public function importWechat()
+    {
+        return $this->hasOne('UserImportWechat', 'u_id', 'u_id');
+    }
+
+    public function club()
+    {
+        return $this->hasOne('Club', 'u_id', 'u_id');
     }
 }

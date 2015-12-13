@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title></title>
+    <link rel="stylesheet" href="../css/manage.css" media="screen">
+    <link rel="stylesheet" href="../css/wheel.css" media="screen">
+    <script src="../js/jquery.min.js"></script>
+</head>
+<body>
+<div class="main">
+    <header>
+        <div class="header_nav">
+            <div class="header_left">
+                <img src="../images/manageLogo.png" alt=""/>
+            </div>
+            <div class="header_right">
+                <img src="../images/head_portrait.jpg" alt=""/>
+                <div class="con_ul">
+                    <ul class="header_ul">
+                        <li><div class="st">社团组织</div></li>
+                        <li><div class="rz">已认证</div></li>
+                    </ul>
+                    <ul class="header_ul2">
+                        <li>用户昵称</li>
+                        <li>退出</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div style="clear:both;"></div>
+    </header>
+   <main>
+        <div class="main_left">
+            <div class="kernel_module">
+                <div class="kernel_module_1">
+                    <img src="../images/kernel_module.png" alt=""/>
+                    <span>核心模块</span>
+                </div>
+                <div class="kernel_module_2">
+                    <ul>
+                        <li><a>校园众筹</a></li>
+                        <li><a>Flea精品</a></li>
+                        <li><a>店铺管理</a></li>
+                        <li><a>毕业招聘</a></li>
+                        <li><a>学生兼职</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="generalize_module">
+                <div class="generalize_module_1">
+                    <img src="../images/generalize_module.png" alt=""/>
+                    <span>推广模块</span>
+                </div>
+                <div class="generalize_module_2">
+                    <ul>
+                        <li><a href="werben.html" target="win">发布广告</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="module_set">
+                <div class="module_set_1">
+                    <img src="../images/module_set.png" alt=""/>
+                    <span>模块设置</span>
+                </div>
+                <div class="module_set_2">
+                    <ul>
+                        <li><a id="if1" href="#" target="if">账号设置</a></li>
+                        <li><a>认证中心</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+       <div class="main_right">
+           <iframe src="homepage.html" id="win" align="center" scrolling="no" name="win" frameBorder=0  onload="this.height=100"></iframe>
+       </div>
+   </main>
+</div>
+</body>
+<script type="text/javascript">
+    function reinitIframe(){
+        var iframe = document.getElementById("win");
+        try{
+            var bHeight = iframe.contentWindow.document.body.scrollHeight;
+            var dHeight = iframe.contentWindow.document.documentElement.scrollHeight;
+            var height = Math.max(bHeight, dHeight);
+            iframe.height = height;
+            console.log(height);
+        }catch (ex){}
+    }
+    window.setInterval("reinitIframe()", 200);
+</script>
+</html>

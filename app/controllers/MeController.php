@@ -159,6 +159,33 @@ class MeController extends \BaseController
         return Response::json($re);
     }
 
+    public function resetPassForWechat()
+    {
+        $mobile = Input::get('mobile');
+        $vcode = Input::get('vcode');
+        $newPass = Input::get('pass');
+
+        try {
+            $user = User::where('u_mobile', '=', $mobile)->first();
+
+            // chcek if mobile exsits
+            if (!isset($user->u_id)) {
+                throw new Exception("没有查找到与该手机号码绑定的用户", 2001);
+            }
+            $phone = new Phone($mobile);
+
+            if ($phone->authVCode($vcode)) {
+                $user->u_password = $newPass;
+                $user->updateUser();
+            }
+            $re = Tools::reTrue('重置密码成功');
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '重置密码失败:'.$e->getMessage());
+        }
+
+        return Response::json($re);
+    }
+
     /**
      * replies from me
      * @author Kydz
@@ -218,8 +245,6 @@ class MeController extends \BaseController
         // base infos
         $token = Input::get('token', '');
         $u_id = Input::get('u_id', '');
-        // s_id 在 数据里面存为c_id 用来标识所在城市, 而数据库中的 s_id 实际意义为 学校id
-        $s_id = Input::get('s_id', '');
 
         // booth type
         $boothType = Input::get('type');
@@ -238,6 +263,7 @@ class MeController extends \BaseController
         $promoStratege = Input::get('promo_strategy');
         // with fund
         $withFund = Input::get('fund', 0);
+        $booth_cate = Input::get('cate', 0);
 
         // profit ratio
         $profitRate = Input::get('profit');
@@ -249,18 +275,21 @@ class MeController extends \BaseController
         DB::beginTransaction();
         try {
             $user = User::chkUserByToken($token, $u_id);
+            $user->load(['school']);
 
-            $booth = Booth::where('u_id', '=', $u_id)->where('b_type', '=', $boothType)->first();
+            $booth = Booth::where('u_id', '=', $u_id)->first();
             if (empty($booth)) {
                 $booth = new Booth();
             } else {
                 if ($booth->b_status == 1) {
-                    throw new Exception("您已经申请过该类店铺了, 请勿重复提交", 7001);
+                    throw new Exception("您已经申请过店铺了", 7001);
                 }
             }
+            $school = $user->school;
 
-            $booth->c_id = $s_id;
-            $booth->s_id = $user->u_school_id;
+            $booth->s_id = $school->t_id;
+            $booth->c_id = $school->t_city;
+            $booth->pv_id = $school->t_province;
             $booth->u_id = $u_id;
             $booth->b_title = $boothTitle;
             $booth->b_desc = '';
@@ -272,6 +301,7 @@ class MeController extends \BaseController
             $booth->b_promo_strategy = $promoStratege;
             $booth->b_with_fund = $withFund;
             $booth->b_type = $boothType;
+            $booth->b_cate = $booth_cate;
             $b_id = $booth->register();
             
             if ($withFund == 1) {
@@ -316,6 +346,10 @@ class MeController extends \BaseController
                     $repayment->f_percentage = $percentage * 100;
                     $repayment->apply();
                 }
+            } else {
+                // if without fund, no need to censor
+                $booth->b_status = 1;
+                $booth->save();
             }
             $re = Tools::reTrue('申请成功');
             DB::commit();
@@ -335,7 +369,10 @@ class MeController extends \BaseController
 
         try {
             $user = User::chkUserByToken($token, $u_id);
-            $data = Booth::with(['user'])->where('u_id', '=', $u_id)->get();
+            $data = Booth::with(['user' => function ($q) {
+                $q->with(['school']);
+            }])
+            ->where('u_id', '=', $u_id)->get();
             $list = [];
             foreach ($data as $key => $booth) {
                 $tmp = $booth->showDetail();
@@ -384,31 +421,6 @@ class MeController extends \BaseController
                 $code = $e->getCode();
             }
             $re = ['result' => $code, 'data' => [], 'info' => '获取我的店铺失败:'.$e->getMessage()];
-        }
-        return Response::json($re);
-    }
-
-    public function putBoothDesc($id)
-    {
-        $token = Input::get('token', '');
-        $u_id = Input::get('u_id', 0);
-        $desc = Input::get('desc', '');
-
-        try {
-            $user = User::chkUserByToken($token, $u_id);
-            $booth = Booth::find($id);
-            if (empty($booth->b_id) || $booth->u_id != $u_id) {
-                throw new Exception("无法获取到请求的店铺", 7001);
-            }
-            $booth->b_desc = $desc;
-            $booth->save();
-            $re = ['result' => 2000, 'data' => [], 'info' => '更新店铺描述成功'];
-        } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '更新店铺描述失败:'.$e->getMessage()];
         }
         return Response::json($re);
     }
@@ -470,7 +482,7 @@ class MeController extends \BaseController
                 $imgs = $imgObj->getSavedImg($id, $booth->b_imgs, true);
                 $booth->b_imgs = implode(',', $imgs);
             } elseif (!$img_token) {
-                $imgs = Img::toArray($booth->b_imgs);
+                $imgs = Img::toArray($booth->b_imgs, true);
                 $imgs['logo'] = 'logo.'.$logo;
                 $booth->b_imgs = implode(',', $imgs);
             }
@@ -480,27 +492,6 @@ class MeController extends \BaseController
             $re = Tools::reTrue('保存店铺状态成功');
         } catch (Exception $e) {
             $re = Tools::reFalse($e->getCode(), '保存店铺状态失败:'.$e->getMessage());
-        }
-        return Response::json($re);
-    }
-
-    public function profileCheck()
-    {
-        $u_id = Input::get('u_id', 0);
-        $token = Input::get('token', '');
-
-        try {
-            $user = User::chkUserByToken($token, $u_id);
-            $bank = TmpUsersBankCard::checkProfile($u_id);
-            $contact = TmpUsersContactPeople::checkProfile($u_id);
-            $detail = TmpUsersDetails::checkProfile($u_id);
-            $re = ['result' => 2000, 'data' => ['detail' => $detail, 'contact' => $contact, 'bank' => $bank], 'info' => '获取用户资料验证信息成功'];
-        } catch (Exception $e) {
-            $code = 3002;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '获取用户资料验证信息失败:'.$e->getMessage()];
         }
         return Response::json($re);
     }
@@ -527,7 +518,7 @@ class MeController extends \BaseController
                 $data['fa_phone'] = '';
             } else {
                 $data['id_num'] = $detail->u_identity_number;
-                $imgs = Img::toArray($detail->u_identity_img);
+                $imgs = Img::toArray($detail->u_identity_img, true);
                 $data['id_img'] = $imgs;
                 $data['home_addr'] = $detail->u_home_adress;
                 $data['mo_name'] = $detail->u_mother_name;
@@ -616,6 +607,7 @@ class MeController extends \BaseController
         return Response::json($re);
     }
 
+    // abandon
     public function getContact()
     {
         $token = Input::get('token', '');
@@ -623,7 +615,7 @@ class MeController extends \BaseController
         
         try {
             $user = User::chkUserByToken($token, $u_id);
-            $contact = TmpUsersContactPeople::find($u_id);
+            $contact = TmpUserProfileBase::find($u_id);
             $contact->load('school');
             $data = [];
             if (!isset($contact->u_id)) {
@@ -647,9 +639,9 @@ class MeController extends \BaseController
                 $data['fr_name_2'] = $contact->u_frend_name2;
                 $data['fr_phone_2'] = $contact->u_frend_telephone2;
                 $data['stu_num'] = $contact->u_student_number;
-                $imgs = Img::toArray($contact->u_student_img);
+                $imgs = Img::toArray($contact->u_student_img, true);
                 $data['stu_img'] = $imgs;
-                $data['school'] = $contact->school->showInList();
+                $data['school'] = empty($contact->school) ? null : $contact->school->showInList();
                 $data['profession'] = $contact->u_prof;
                 $data['degree'] = $contact->u_degree;
                 $data['entry_year'] = $contact->u_entry_year;
@@ -665,6 +657,7 @@ class MeController extends \BaseController
         return Response::json($re);
     }
 
+    // abandon
     public function postContact()
     {
         $token = Input::get('token', '');
@@ -699,9 +692,9 @@ class MeController extends \BaseController
         try {
             $user = User::chkUserByToken($token, $u_id);
 
-            $user_contact_people = TmpUsersContactPeople::find($u_id);
+            $user_contact_people = TmpUserProfileBase::find($u_id);
             if (!isset($user_contact_people->u_id)) {
-                $user_contact_people = new TmpUsersContactPeople();
+                $user_contact_people = new TmpUserProfileBase();
             }
             if ($user_contact_people->u_status == 1) {
                 throw new Exception("您的审核已经通过", 3002);
@@ -733,93 +726,10 @@ class MeController extends \BaseController
                 $user_contact_people->save();
             }
 
-            $re = ['result' => 2000, 'data' => [], 'info' => '提交学校信息成功'];
+            $re = Tools::reTrue('提交学校信息成功');
         } catch (Exception $e) {
-            TmpUsersContactPeople::clearByUser($u_id);
-            $code = 3002;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '提交学校信息失败:'.$e->getMessage()];
-        }
-        return Response::json($re);
-    }
-
-    public function getCard()
-    {
-        $token = Input::get('token', '');
-        $u_id = Input::get('u_id', '');
-        
-        try {
-            $user = User::chkUserByToken($token, $u_id);
-            $card = TmpUsersBankCard::where('u_id', '=', $u_id)->first();
-            $card->load('bank');
-            if (!isset($card->u_id)) {
-                $data['bank'] = null;
-                $data['card_num'] = '';
-                $data['card_holder'] = '';
-                $data['holder_phone'] = '';
-                $data['holder_ID'] = '';
-            } else {
-                $data['bank'] = $card->bank->showInList();
-                $data['card_num'] = $card->b_card_num;
-                $data['card_holder'] = $card->b_holder_name;
-                $data['holder_phone'] = $card->u_frend_telephone1;
-                $data['holder_ID'] = $card->b_holder_identity;
-            }
-            $re = Tools::reTrue('获取用户银行卡成功', $data);
-        } catch (Exception $e) {
-            $re = Tools::reFalse($e->getCode(), '获取用户银行卡失败:'.$e->getMessage());
-        }
-        return Response::json($re);
-    }
-
-    public function postCard()
-    {
-        $token = Input::get('token', '');
-        $u_id = Input::get('u_id', '');
-        $vcode = Input::get('vcode', '');
-        $mobile = Input::get('mobile', '');
-
-        // id bank
-        $bankId = Input::get('bank', 0);
-        // bank card number
-        $cardNum = Input::get('card_num', '');
-        // card holder name
-        $cardHolderName = Input::get('card_holder', '');
-        // card holder phone
-        $cardHolderPhone = Input::get('holder_phone', '');
-        // card holder identy
-        $cardHolderID = Input::get('holder_ID', '');
-
-        try {
-            $user = User::chkUserByToken($token, $u_id);
-
-            $phone = new Phone($mobile);
-            $phone->authVCode($vcode);
-
-            $card = TmpUsersBankCard::where('u_id', '=', $u_id)->first();
-            if (!isset($card->u_id)) {
-                $card = new TmpUsersBankCard();
-            }
-            if ($card->u_status == 1) {
-                throw new Exception("您的审核已经通过", 3002);
-            }
-            $card->u_id = $u_id;
-            $card->b_id = $bankId;
-            $card->b_card_num = $cardNum;
-            $card->b_holder_name = $cardHolderName;
-            $card->b_holder_phone = $cardHolderPhone;
-            $card->b_holder_identity = $cardHolderID;
-            $card->register();
-            $re = ['result' => 2000, 'data' => [], 'info' => '提交银行卡信息成功'];
-        } catch (Exception $e) {
-            TmpUsersBankCard::clearByUser($u_id);
-            $code = 3002;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '提交银行卡信息失败:'.$e->getMessage()];
+            TmpUserProfileBase::clearByUser($u_id);
+            $re = Tools::reFalse($e->getCode(), '提交学校信息失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -881,16 +791,20 @@ class MeController extends \BaseController
         $b_id = Input::get('b_id', '');
         
         $prodName = Input::get('prod_name', '');
-        $prodDesc = Input::get('prod_desc', '');
+        $prodDesc = Input::get('content', '');
         $prodBrief = Input::get('prod_brief', '');
         $prodCost = Input::get('prod_cost', 0);
         $prodPriceOri = Input::get('prod_price', 0);
         $prodDiscount = Input::get('prod_discount', 100);
         $prodStock = Input::get('prod_stock', 0);
         $publish = Input::get('publish', 1);
-
+        $product_cate = Input::get('cate');
+        if (!$product_cate) {
+            $product_cate = 7;
+        }
+        $prodDesc = urldecode($prodDesc);
         $promoDesc = Input::get('promo', '');
-        $promoRange = Input::get('promo_range', 0);
+        $promoRange = Input::get('promo_range', 1);
 
         $imgToken = Input::get('img_token', '');
 
@@ -914,6 +828,8 @@ class MeController extends \BaseController
             $product->p_desc = $prodDesc;
             $product->p_brief = $prodBrief;
             $product->p_status = $publish == 1 ? 1 : 2;
+            $product->p_cate = $product_cate;
+            $product->p_type = 1;
             $p_id = $product->addProduct();
             $quantity = new ProductQuantity();
             $quantity->p_id = $p_id;
@@ -927,7 +843,7 @@ class MeController extends \BaseController
                 $user->load('school');
                 $promo = new PromotionInfo();
                 $promo->p_id = $p_id;
-                $promo->p_content = $promoDesc;
+                $promo->p_content = $prodName;
                 $promo->c_id = $user->school->t_city;
                 $promo->s_id = $user->school->t_id;
                 $promo->b_id = $b_id;
@@ -943,18 +859,14 @@ class MeController extends \BaseController
                 $product->save();
             }
 
-            $re = ['result' => 2000, 'data' => [], 'info' => '添加产品成功'];
+            $re = Tools::reTrue('添加产品成功');
         } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '添加产品失败:'.$e->getMessage()];
+            $re = Tools::reFalse($e->getCode(), '添加产品失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
 
-    public function updateProduct($id)
+    public function putProduct($id)
     {
         $token = Input::get('token', '');
         $u_id = Input::get('u_id', 0);
@@ -970,6 +882,7 @@ class MeController extends \BaseController
 
         $promoDesc = Input::get('promo', '');
         $promoRange = Input::get('promo_range', 0);
+        $product_cate = Input::get('cate', 7);
 
         $imgToken = Input::get('img_token', '');
 
@@ -995,6 +908,7 @@ class MeController extends \BaseController
             $product->p_discount = $prodDiscount;
             $product->p_desc = $prodDesc;
             $product->sort = 1;
+            $product->p_cate = $product_cate;
             $product->p_brief = $prodBrief;
             $product->p_status = $publish == 1 ? 1 : 2;
             $product->saveProduct($prodStock);
@@ -1009,6 +923,7 @@ class MeController extends \BaseController
                     $promo->p_content = $promoDesc;
                     $promo->c_id = $user->school->t_city;
                     $promo->s_id = $user->school->t_id;
+                    $promo->pv_id = $user->school->t_province;
                     $promo->b_id = $product->b_id;
                     $promo->p_range = $promoRange;
                     $promo->addPromo();
@@ -1024,13 +939,9 @@ class MeController extends \BaseController
                 $product->save();
             }
 
-            $re = ['result' => 2000, 'data' => [], 'info' => '更新产品成功'];
+            $re = Tools::reTrue('更新产品成功');
         } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '更新产品失败:'.$e->getMessage()];
+            $re = Tools::reFalse($e->getCode(), '更新产品失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -1049,13 +960,9 @@ class MeController extends \BaseController
                 throw new Exception("请传入正确的排序数据", 1);
             }
             $re = Product::updateSort($sortArray);
-            $re = ['result' => 2000, 'data' => [], 'info' => '更新排序成功'];
+            $re = Tools::reTrue('更新排序成功');
         } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '更新排序失败:'.$e->getMessage()];
+            $re = Tools::reFalse($e->getCode(), '更新排序失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -1074,13 +981,9 @@ class MeController extends \BaseController
                 throw new Exception("请传入正确的排序数据", 1);
             }
             $re = Product::updateDiscount($discountArray);
-            $re = ['result' => 2000, 'data' => [], 'info' => '更新折扣成功'];
+            $re = Tools::reTrue('更新折扣成功');
         } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '更新折扣失败:'.$e->getMessage()];
+            $re = Tools::reTrue('更新折扣失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -1099,13 +1002,9 @@ class MeController extends \BaseController
             }
             $product->p_status = $on == 1 ? 1 : 2;
             $product->save();
-            $re = ['result' => 2000, 'data' => [], 'info' => '产品操作成功'];
+            $re = Tools::reTrue('产品操作成功');
         } catch (Exception $e) {
-            $code = 7001;
-            if ($e->getCode() > 2000) {
-                $code = $e->getCode();
-            }
-            $re = ['result' => $code, 'data' => [], 'info' => '产品操作失败:'.$e->getMessage()];
+            $re = Tools::reFalse($e->getCode(), '产品操作失败:'.$e->getMessage());
         }
         return Response::json($re);
     }
@@ -1522,115 +1421,6 @@ class MeController extends \BaseController
         return Response::json($re);
     }
 
-    public function getUserBase()
-    {
-        $token = Input::get('token', '');
-        $u_id = Input::get('u_id', 0);
-
-        try {
-            $data = [];
-            $user = User::chkUserByToken($token, $u_id);
-            $user->load('school');
-            $user_contact = UsersContactPeople::find($u_id);
-            if (empty($user_contact->u_id)) {
-                $entry_year = '';
-                $stu_imgs = '';
-            } else {
-                $entry_year = $user_contact->u_entry_year;
-                $stu_imgs = Img::toArray($user_contact->u_student_img);
-            }
-            if (empty($stu_imgs)) {
-                $stu_imgs = null;
-            }
-            $user_detail = UsersDetail::find($u_id);
-            if (empty($user_detail->u_id)) {
-                $id_imgs = '';
-            } else {
-                $id_imgs = Img::toArray($user_detail->u_identity_img);
-            }
-            if (empty($id_imgs)) {
-                $id_imgs = null;
-            }
-
-            $data['id'] = $user->u_id;
-            $data['name'] = $user->u_name;
-            $data['home_imgs'] = Img::toArray($user->u_home_img);
-            $data['head_img'] = $user->u_head_img;
-            $data['stu_imgs'] = $stu_imgs;
-            $data['id_imgs'] = $id_imgs;
-            $data['entry_year'] = $entry_year;
-            $data['gender'] = $user->u_sex;
-            $data['nickname'] = $user->u_nickname;
-            $data['biograph'] = $user->u_biograph;
-            $data['school'] = $user->school->showInList();
-            $brith_date = new DateTime($user->u_birthday);
-            $data['birth'] = $brith_date->format('Y-m-d');
-            $data['interests'] = $user->u_interests;
-            $re = Tools::reTrue('获取用户基本信息成功', $data);
-        } catch (Exception $e) {
-            $re = Tools::reFalse($e->getCode(), '获取用户基本信息失败:'.$e->getMessage());
-        }
-        return Response::json($re);
-    }
-
-    public function putUserBase()
-    {
-        $token = Input::get('token', '');
-        $u_id = Input::get('u_id', 0);
-
-        $name = Input::get('name', '');
-        $nickname = Input::get('nickname', '');
-        $birth = Input::get('birth', '');
-        $gender = Input::get('gender', 0);
-        $biograph = Input::get('biograph', '');
-        $entry_year = Input::get('entry_year', '');
-        $interests = Input::get('interests', '');
-
-        $img_token = Input::get('img_token', '');
-
-        try {
-            $user = User::chkUserByToken($token, $u_id);
-            $user_contact = UsersContactPeople::find($u_id);
-            if (empty($user_contact->u_id)) {
-                $user_contact = new UsersContactPeople();
-                $user_contact->u_id = $u_id;
-            }
-            $user_detail = UsersDetail::find($u_id);
-            if (empty($user_detail->u_id)) {
-                $user_detail = new UsersDetail();
-                $user_detail->u_id = $u_id;
-            }
-            $user_contact->u_entry_year = $entry_year;
-
-            $birth_date = new DateTime($birth);
-            $user->u_name = $name;
-            $user->u_birthday = $birth_date;
-            $user->u_sex = $gender;
-            $user->u_biograph = $biograph;
-            $user->u_interests = $interests;
-            $user->u_nickname = $nickname;
-            if ($img_token) {
-                $imgObj = new Img('user', $img_token);
-                $imgs = $imgObj->getSavedImg($u_id, implode(',', [$user->u_home_img, $user->u_head_img, $user_contact->u_student_img, $user_detail->u_identity_img]), true);
-                $home_imgs = Img::filterKey('home_img_', $imgs);
-                $stu_imgs = Img::filterKey('student_img_', $imgs);
-                $id_imgs = Img::filterKey('identity_img_', $imgs);
-                $head_img = Img::filterKey('head_img', $imgs);
-                $user->u_home_img = implode(',', $home_imgs);
-                $user->u_head_img = implode(',', $head_img);
-                $user_contact->u_student_img = implode(',', $stu_imgs);
-                $user_detail->u_identity_img = implode(',', $id_imgs);
-            }
-            $user_contact->save();
-            $user_detail->save();
-            $user->save();
-            $re = Tools::reTrue('编辑基本信息成功');
-        } catch (Exception $e) {
-            $re = Tools::reFalse($e->getCode(), '编辑信息失败:'.$e->getMessage());
-        }
-        return Response::json($re);
-    }
-
     public function showWallet()
     {
         $token = Input::get('token', '');
@@ -1638,7 +1428,7 @@ class MeController extends \BaseController
 
         try {
             $user = User::chkUserByToken($token, $u_id);
-            $bank = UsersBankCard::where('u_id', '=', $u_id)->first();
+            $bank = UserProfileBankcard::find($u_id);
             $alipay = UsersAlipayPayment::find($u_id);
             $wechat = UsersWechatPayment::find($u_id);
             if (empty($bank)) {
@@ -1739,16 +1529,16 @@ class MeController extends \BaseController
 
         try {
             $user = User::chkUserByToken($token, $u_id);
-            $card = UsersBankCard::where('b_card_num', '=', $card_num)->first();
+            $card = UserProfileBankcard::where('b_card_number', '=', $card_num)->first();
             if (!empty($card) && $card->u_id != $u_id) {
                 throw new Exception("该卡号不可用", 9007);
             }
-            $card = UsersBankCard::where('u_id', '=', $u_id)->first();
+            $card = UserProfileBankcard::find($u_id);
             if (empty($card)) {
-                $card = new UsersBankCard();
+                $card = new UserProfileBankcard();
                 $card->u_id = $u_id;
             }
-            $card->b_card_num = $card_num;
+            $card->b_card_number = $card_num;
             $card->b_holder_name = $holder;
             $card->b_id = $bank;
             $card->save();
@@ -1928,6 +1718,246 @@ class MeController extends \BaseController
             $re = Tools::reTrue('获取提现记录成功', $data);
         } catch (Exception $e) {
             $re = Tools::reFalse($e->getCode(), '获取提现记录失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function delHomeImg()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+        $obj = Input::get('obj', '');
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $home_imgs = explode(',', $user->u_home_img);
+            foreach ($home_imgs as $key => $img) {
+                if ($obj == $img) {
+                    unset($home_imgs[$key]);
+                    break;
+                }
+            }
+            $user->u_home_img = implode(',', $home_imgs);
+            $user->save();
+
+            $oss = new AliyunOss('user');
+            $obj = Img::getFileName($obj);
+            $obj = 'user/'.$u_id.'/'.$obj;
+            $oss->remove($obj);
+
+            $re = Tools::reTrue('删除图片成功');
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '删除图片失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function delProductImg($id)
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+        $obj = Input::get('obj', '');
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $product = Product::find($id);
+            if (empty($product)) {
+                throw new Exception("没有找到请求的图片", 7001);
+            }
+            $imgs = explode(',', $product->p_imgs);
+            foreach ($imgs as $key => $img) {
+                if ($obj == $img) {
+                    unset($imgs[$key]);
+                    break;
+                }
+            }
+
+            $product->p_imgs = implode(',', $imgs);
+            $product->save();
+
+            $oss = new AliyunOss('product');
+            $obj = Img::getFileName('obj');
+            $obj = 'product/'.$id.'/'.$obj;
+            $oss->remove($obj);
+
+            $re = Tools::reTrue('删除图片成功');
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '删除图片失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function listFavoriteBooth()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+        $per_page = Input::get('per_page', 0);
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $list = Booth::select('booths.*', 'favorites.created_at')->with([
+                'user',
+                'school',
+                'city',
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                }
+                ])
+            ->join('favoriables', function ($q) {
+                $q->on('booths.b_id', '=', 'favoriables.favoriable_id')->where('favoriables.favoriable_type', '=', 'Booth');
+            })->join('favorites', function ($q) {
+                $q->on('favorites.id', '=', 'favoriables.favorite_id')->where('favorites.u_id', '=', $this->u_id);
+            })->orderBy('favorites.created_at', 'DESC')->paginate($per_page);
+            $data = [];
+            foreach ($list as $key => $booth) {
+                $tmp = $booth->showInList();
+                $tmp['is_praised'] = 0;
+                if (count($booth->praises) > 0) {
+                    $tmp['is_praised'] = 1;
+                }
+                $data[] = $tmp;
+            }
+            $re = Tools::reTrue('获取店铺成功', $data);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '获取店铺失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function listFavoriteUser()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+        $per_page = Input::get('per_page', 0);
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $list = User::select('users.*', 'favorites.created_at')->with([
+                'school',
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                }
+                ])
+            ->join('favoriables', function ($q) {
+                $q->on('users.u_id', '=', 'favoriables.favoriable_id')->where('favoriables.favoriable_type', '=', 'User');
+            })->join('favorites', function ($q) {
+                $q->on('favorites.id', '=', 'favoriables.favorite_id')->where('favorites.u_id', '=', $this->u_id);
+            })->orderBy('favorites.created_at', 'DESC')->paginate($per_page);
+            $data = [];
+            foreach ($list as $key => $user) {
+                $tmp = $user->showInList();
+                $tmp['is_praised'] = 0;
+                if (count($user->praises) > 0) {
+                    $tmp['is_praised'] = 1;
+                }
+                $data[] = $tmp;
+            }
+            $re = Tools::reTrue('获取用户列表成功', $data);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '获取用户列表失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function listFavoriteProduct()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+        $per_page = Input::get('per_page', 0);
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $list = Product::select('products.*', 'favorites.created_at')
+            ->with([
+                'user' => function ($q) {
+                    $q->with(['school']);
+                },
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                }
+            ])
+            ->join('favoriables', function ($q) {
+                $q->on('products.p_id', '=', 'favoriables.favoriable_id')->where('favoriables.favoriable_type', '=', 'Product');
+            })->join('favorites', function ($q) {
+                $q->on('favorites.id', '=', 'favoriables.favorite_id')->where('favorites.u_id', '=', $this->u_id);
+            })->orderBy('favorites.created_at', 'DESC')->paginate($per_page);
+            $data = [];
+            foreach ($list as $key => $product) {
+                $tmp = $product->showInList();
+                $tmp['is_praised'] = 0;
+                if (count($product->praises) > 0) {
+                    $tmp['is_praised'] = 1;
+                }
+                $data[] = $tmp;
+            }
+            $re = Tools::reTrue('获取收藏列表成功', $data);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '获取收藏列表失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function listFavoriteCrowd()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id');
+
+        $per_page = Input::get('per_page', 0);
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            $list = CrowdFunding::select('crowd_fundings.*', 'favorites.created_at')->with([
+                'user',
+                'city',
+                'school',
+                'eventItem',
+                'praises' => function ($q) {
+                    $q->where('praises.u_id', '=', $this->u_id);
+                }
+                ])
+            ->join('favoriables', function ($q) {
+                $q->on('crowd_fundings.cf_id', '=', 'favoriables.favoriable_id')->where('favoriables.favoriable_type', '=', 'CrowdFunding');
+            })->join('favorites', function ($q) {
+                $q->on('favorites.id', '=', 'favoriables.favorite_id')->where('favorites.u_id', '=', $this->u_id);
+            })->orderBy('favorites.created_at', 'DESC')->paginate($per_page);
+            $data = [];
+            foreach ($list as $key => $funding) {
+                $tmp = $funding->showInList();
+                $tmp['is_praised'] = 0;
+                if (count($funding->praises) > 0) {
+                    $tmp['is_praised'] = 1;
+                }
+                $data[] = $tmp;
+            }
+            $re = Tools::reTrue('获取用户列表成功', $data);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '获取用户列表失败:'.$e->getMessage());
+        }
+        return Response::json($re);
+    }
+
+    public function putHeadImg()
+    {
+        $token = Input::get('token', '');
+        $u_id = Input::get('u_id', 0);
+
+        $img_token = Input::get('img_token');
+
+        try {
+            $user = User::chkUserByToken($token, $u_id);
+            if ($img_token) {
+                $imgObj = new Img('user', $img_token);
+                $imgs = $imgObj->getSavedImg($u_id, implode(',', [$user->u_head_img]), true);
+                $head_img = Img::filterKey('head_img', $imgs);
+                $user->u_head_img = implode(',', $head_img);
+                $user->save();
+            } else {
+                throw new Exception("请上传头像", 2001);
+            }
+            $data['head_img'] = $head_img;
+            $re = Tools::reTrue('修改头像成功', $data);
+        } catch (Exception $e) {
+            $re = Tools::reFalse($e->getCode(), '修改头像失败:'.$e->getMessage());
         }
         return Response::json($re);
     }

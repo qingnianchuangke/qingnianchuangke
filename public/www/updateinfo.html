@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="viewport" content="width=device-width,target-densitydpi=high-dpi,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>下载青年创</title>
+    <meta charset="utf-8" />
+    <script src="./js/jquery.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function () {
+        if (navigator.userAgent.match(/(iPhone|iPod|iPad);?/i)) {
+            alert("亲，检测到您来自ios系统，请关注青年创官方微信公众号（搜索：青年创客）体验，ios版本稍后开放。敬请期待。");
+        } else if (navigator.userAgent.match(/android/i)) {
+            var state = null;
+            try {
+              $("#applink").click();
+            } catch(e) {
+            }
+        }else{
+            
+        }
+    });
+    function download () {
+        window.location.href='http://www.54qnck.com/qnck/download.html';
+    }
+    </script>
+</head>
+<body>
+    <a id="applink" style="display:none;" href="makerck://home.index">open</a>
+    <img style="width:100%" src="images/bg0808.jpg" />
+    <div style="font-size:24px;color:white;background-color:#6FB6E2;border-radius: 15px;text-align:center;padding:10px 0px;position:fixed;bottom:0px;left:0px;right:0px;width:100%;" id="btnDown" onclick="download()">下载青年创APP</div>
+</body>
+</html>

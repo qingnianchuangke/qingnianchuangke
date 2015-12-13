@@ -8,12 +8,13 @@ class Booth extends Eloquent
     public $timestamps = false;
 
     public static $type = [1 => '便利店', 2 => '创的店', 3 => '创的店与便利店'];
+    private $_imgs = [];
 
     private function baseValidate()
     {
         $validator = Validator::make(
-            ['site' => $this->s_id, 'type' => $this->b_type, 'user' => $this->u_id, 'title' => $this->b_title],
-            ['site' => 'required', 'type' => 'required', 'user'=> 'required', 'title' => 'required']
+            ['site' => $this->c_id, 'user' => $this->u_id, 'title' => $this->b_title],
+            ['site' => 'required', 'user'=> 'required', 'title' => 'required']
         );
         if ($validator->fails()) {
             $msg = $validator->messages();
@@ -25,6 +26,7 @@ class Booth extends Eloquent
 
     public function showInLogin()
     {
+        $this->loadImg();
         $data = [];
         $data['id'] = $this->b_id;
         $data['title'] = $this->b_title;
@@ -32,6 +34,7 @@ class Booth extends Eloquent
         $data['type'] = $this->b_type;
         $data['category'] = $this->b_product_category;
         $data['logo'] = $this->getLogo();
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
         $data['fans'] = $this->b_fans_count;
         $data['status'] = $this->b_status;
         $data['open'] = $this->b_open;
@@ -45,23 +48,31 @@ class Booth extends Eloquent
 
     public function showInList()
     {
+        $this->loadImg();
         $data = [];
         $data['id'] = $this->b_id;
         $data['title'] = $this->b_title;
         $data['desc'] = $this->b_desc;
         $data['type'] = $this->b_type;
         $data['category'] = $this->b_product_category;
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
         $data['user'] = null;
         $data['status'] = $this->b_status;
         $data['remark'] = $this->remark;
+        $data['praise_count'] = $this->b_praise_count;
         if (!empty($this->user)) {
             $data['user'] = $this->user->showInList();
+        }
+        if (!empty($this->school)) {
+            $data['school'] = $this->school->showInList();
+            $data['city'] = DicCity::where('c_id', '=', $this->school->t_city)->where('c_province_id', '=', $this->school->t_province)->first()->showInList();
         }
         return $data;
     }
 
     public function showDetail()
     {
+        $this->loadImg();
         $data = [];
         $data['id'] = $this->b_id;
         $data['title'] = $this->b_title;
@@ -70,6 +81,7 @@ class Booth extends Eloquent
         $data['category'] = $this->b_product_category;
         $data['source'] = $this->b_product_source;
         $data['logo'] = $this->getLogo();
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
         $data['fans'] = $this->b_fans_count;
         $data['status'] = $this->b_status;
         $data['lng'] = $this->longitude;
@@ -83,17 +95,22 @@ class Booth extends Eloquent
         $data['open_on'] = $this->open_on;
         $data['status'] = $this->b_status;
         $data['remark'] = $this->remark;
+        $data['praise_count'] = $this->b_praise_count;
         $user = null;
         if (!empty($this->user)) {
             $user = $this->user->showInList();
         }
         $data['user'] = $user;
-
+        if (!empty($this->school)) {
+            $data['school'] = $this->school->showInList();
+            $data['city'] = DicCity::where('c_id', '=', $this->school->t_city)->where('c_province_id', '=', $this->school->t_province)->first()->showInList();
+        }
         return $data;
     }
 
     public function showInOffice()
     {
+        $this->loadImg();
         $data = [];
         $data['id'] = $this->b_id;
         $data['title'] = $this->b_title;
@@ -102,6 +119,7 @@ class Booth extends Eloquent
         $data['category'] = $this->b_product_category;
         $data['source'] = $this->b_product_source;
         $data['logo'] = $this->getLogo();
+        $data['cover_img'] = Img::filterKey('cover_img', $this->_imgs);
         $data['fans'] = $this->b_fans_count;
         $data['status'] = $this->b_status;
         $data['lng'] = $this->longitude;
@@ -166,8 +184,8 @@ class Booth extends Eloquent
         } else {
             $content = '审核店铺记录, '.$old_status;
         }
-        $pushMsgObj = new PushMessage($this->u_id);
-        $pushMsgObj->pushMessage($content);
+        $msg = new MessageDispatcher($this->u_id);
+        $msg->fireTextToUser($content);
         $this->addCensorLog($content);
         return $this->save();
     }
@@ -175,7 +193,7 @@ class Booth extends Eloquent
     public function getLogo()
     {
         $logo = null;
-        $imgs = Img::toArray($this->b_imgs);
+        $imgs = $this->_imgs;
         if (empty($imgs['logo'])) {
             $logo = null;
         } elseif (strpos($imgs['logo'], 'http://') !== false) {
@@ -192,6 +210,11 @@ class Booth extends Eloquent
         if (!empty($record)) {
             $record->delete();
         }
+    }
+
+    private function loadImg()
+    {
+        $this->_imgs = Img::toArray($this->b_imgs);
     }
 
     // laravel relations
@@ -214,5 +237,25 @@ class Booth extends Eloquent
     public function fund()
     {
         return $this->hasOne('Fund', 'b_id', 'b_id');
+    }
+
+    public function school()
+    {
+        return $this->hasOne('DicSchool', 't_id', 's_id');
+    }
+
+    public function city()
+    {
+        return $this->hasOne('DicCity', 'c_id', 'c_id');
+    }
+    
+    public function praises()
+    {
+        return $this->morphToMany('Praise', 'praisable');
+    }
+
+    public function favorites()
+    {
+        return $this->morphToMany('Favorite', 'favoriable');
     }
 }
